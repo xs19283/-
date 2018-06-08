@@ -4,7 +4,7 @@ Servo myservo; // 建立Servo物件，控制伺服馬達
 char cmd[9] ;  //接字元字串
 byte data[5];
 byte compareArray[2];
-void compare(byte*);
+void SUM(byte*);
 short sum1,sum2;
 
 // HX711.DOUT	- pin #A1
@@ -19,7 +19,7 @@ void setup() {
   myservo.write(90); //初始為90中間位置
   delay(1000);
   
-  Serial.setTimeout(10); // 設定為每10毫秒結束一次讀取字元
+  Serial.setTimeout(100); // 設定為每100毫秒結束一次讀取字元   
   
 
   Serial.println("Before setting up the scale:");
@@ -84,7 +84,7 @@ void loop()
     unsigned short bdafter=bdbefore;
     data[0]=bdafter;
   }
-  compare(data);
+  SUM(data);
   Serial.print("平均值後差距大小 : ");
   Serial.println(compareArray[0]-compareArray[1]);
   Serial.print("平均值 : ");
@@ -135,7 +135,7 @@ void loop()
   }
 }
 
-void compare(byte* dataA)
+void SUM(byte* dataA)
 {
   sum1=0;
   for(byte b=0;b<5;b++)
