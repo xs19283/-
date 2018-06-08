@@ -74,7 +74,7 @@ void loop()
   
   Serial.println();
   Serial.println(" ");
-  delay(10);
+  delay(20);
   if(scale.get_units())
   {
     for(byte b=4;b>0;b--)
@@ -83,7 +83,6 @@ void loop()
     }
     unsigned short bdafter=bdbefore;
     data[0]=bdafter;
-    
   }
   compare(data);
   Serial.print("平均值後差距大小 : ");
@@ -98,13 +97,13 @@ void loop()
   }
   Serial.println(" ");
   if(sum1<50){
-    ctrl=1;
+    ctrl=3;
   }
   if(sum1>=50&&sum1<100){
     ctrl=4;
   }
   if(sum1>=100){
-    ctrl=6;
+    ctrl=5;
   }
     
   if(Serial.available())
@@ -138,11 +137,13 @@ void loop()
 
 void compare(byte* dataA)
 {
+  sum1=0;
   for(byte b=0;b<5;b++)
   {
     sum1+=dataA[b];
   }
   sum1=sum1/5;
+  Serial.println(sum1);
   compareArray[0]=sum1;
   
 }
