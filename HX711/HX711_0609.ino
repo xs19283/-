@@ -236,7 +236,6 @@ void TirePressure(){
 }
 
 void loop() {  
-  int c;
   PutArray();
   List();
   //delay(100);
