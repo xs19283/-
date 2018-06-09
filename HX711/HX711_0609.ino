@@ -1,15 +1,20 @@
 #include "HX711.h"
 #include <Servo.h>
+#include <SoftwareSerial.h>
+SoftwareSerial mySerial(10, 11); // RX, TX
 Servo myservo; // 建立Servo物件，控制伺服馬達
 
 #define NUMBER 5
+#define TireNumber 6
 
 HX711 scale;
 float ForceArray [NUMBER];
 float SortArray [NUMBER];
+float TireArray [TireNumber];
 
 void setup() {
-  Serial.begin(38400);
+  Serial.begin(9600);
+  mySerial.begin(9600);
   //myservo.attach(6, 500, 2400); // 修正脈衝寬度範圍
   myservo.attach(6);
   Serial.println("Initializing the scale");
@@ -209,6 +214,27 @@ void SortByArray(){
   }
 }
 
+////////////////////////////////////
+////胎壓數值
+////////////////////////////////////
+void TirePressure(){
+  int OutRd, InRd;
+  
+  if (mySerial.available()){
+    OutRd = mySerial.read();
+    if(OutRd == 85){
+      TireArray[0] = OutRd;
+      for(int i=1; i<TireNumber; i++){
+        InRd = mySerial.read();
+        if(InRd != 85){
+          TireArray[i] = InRd;
+        }
+      }
+    }
+  }
+  Serial.println("");
+}
+
 void loop() {  
   int c;
   PutArray();
@@ -218,6 +244,8 @@ void loop() {
   //CalculateByLoad();
   CalculateByVariance();
   //CalculateByMedian();
+  TirePressure();
+  
 }
 /*
  byte c[1];
@@ -236,5 +264,13 @@ void loop() {
     Serial.print(SortArray[i], 1);    
   }  
   Serial.println("\t");    
+  
+  //TireArray陣列查看
+  Serial.print("TireArray \t");
+  for (int i=0; i<TireNumber; i++){
+    Serial.print("\t");
+    Serial.print(TireArray[i], 1);    
+  }
+  Serial.println("\t"); 
 */
 
