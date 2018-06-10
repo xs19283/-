@@ -1,7 +1,7 @@
 #include "HX711.h"
 #include <Servo.h>
 #include <SoftwareSerial.h>
-SoftwareSerial mySerial(10, 11); // RX, TX
+SoftwareSerial mySerial(2, 3); // RX, TX
 Servo myservo; // 建立Servo物件，控制伺服馬達
 
 #define NUMBER 5
@@ -9,13 +9,13 @@ Servo myservo; // 建立Servo物件，控制伺服馬達
 #define BUTTONRED 12
 #define BUTTONBULE 13
 #define SW 8
-
+#define TireNUMBER 8
 
 
 HX711 scale;
 float ForceArray [NUMBER];
 float SortArray [NUMBER];
-//float TireArray [TireNumber];
+
 int Tire;
 int Seg=1;
 int OnOff;
@@ -312,30 +312,16 @@ void BuleAndRed(){
 ////胎壓數值
 ////////////////////////////////////
 void TirePressure(){
-  int OutRd;
-  
-    OutRd = mySerial.read();
-    if(OutRd == 85){  //如果是讀到85 就開始放值
-      /*for(int i=1; i<TireNumber; i++){
-       //InRd = mySerial.read();
-        
-          TireArray[i] = mySerial.read();
-      }*/
-      
-      Tire = mySerial.read();
-    }else{  //如果沒讀到就歸零
-      /*for(int i=0; i<TireNumber; i++){
-        TireArray[i]=0;
-      }*/
-      Tire = 0;
-    }
-  
-  Serial.println("");
+    
 }
 
+////////////////////////////////////
+////開關判斷
+////////////////////////////////////
 void SwitchOnOff(){
   OnOff=digitalRead(SW);
   if(OnOff == HIGH){
+    
     PutArray();
     //List();
     //delay(100);
@@ -346,9 +332,7 @@ void SwitchOnOff(){
     VariancePulsByLoad();   ////平均值與標準差判斷
     TirePressure();
     
-  //Tire數值查看
-  Serial.print("Tire \t");
-  Serial.println(Tire);
+    
   }else{
     BuleAndRed();
     TirePressure();
