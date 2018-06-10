@@ -17,7 +17,7 @@ void loop() {
       for(int i=1; i<8; i++){
           TireArray[i] = mySerial.read();
       }
-      delay(17.2);
+      delay(17.2);  //測到最好的數值
     }else{  //如果沒讀到就歸零
       /*for(int i=0; i<TireNumber; i++){
           TireArray[i]=0;
