@@ -1,14 +1,12 @@
 #include <SoftwareSerial.h>
-#include <TimedAction.h>
 
-#define TireTime 19.2
+
+
 int TireArray[8];
 void mySerialEvent(void);
 void TirePrint(void);
-
-SoftwareSerial mySerial(0, 1); // RX, TX
-TimedAction mySerialAction = TimedAction(TireTime, mySerialEvent);
-TimedAction mySerialprint = TimedAction(TireTime, TirePrint);
+int i;
+SoftwareSerial mySerial(2, 3); // RX, TX
 
 void setup() {
   // put your setup code here, to run once:
@@ -19,15 +17,9 @@ void setup() {
 }
 
 void mySerialEvent() {
-  int i;
-  if ((TireArray[0] = mySerial.read()) == 85) {
-    for (i = 1; i < 8; i++) {
-      TireArray[i] = mySerial.read();
-    }
-  }
-  
-}
 
+
+}
 void TirePrint() {
   for (int i = 0; i < 8; i++) {
     Serial.print(TireArray[i]);
@@ -37,8 +29,20 @@ void TirePrint() {
 }
 
 void loop() {
-  mySerialAction.check();
-  mySerialprint.check();
+  int in1;
+  while (mySerial.available() > 0) {
+    in1 = mySerial.read();
+    if (in1 == 85) {
+      TireArray[0] = in1;
+    } else {
+      TireArray[i] = in1;
+    }
+    i++;
+    if (i == 8) {
+      i = 0;
+    }
+  }
+   TirePrint();
 }
 
 /*int OutRd;
