@@ -1,8 +1,11 @@
 #include "HX711.h"
 #include <Servo.h>
+#include <Timer.h>
 #include <SoftwareSerial.h>
-SoftwareSerial mySerial(2, 3); // RX, TX
+
+SoftwareSerial mySerial(10, 11); // RX, TX
 Servo myservo; // 建立Servo物件，控制伺服馬達
+//Timer T1;
 
 #define NUMBER 5
 #define LED 7
@@ -11,16 +14,14 @@ Servo myservo; // 建立Servo物件，控制伺服馬達
 #define SW 8
 #define TireNUMBER 8
 
-
 HX711 scale;
 float ForceArray [NUMBER];
 float SortArray [NUMBER];
 int TireArray[TireNUMBER];
-int Tire;
+int TireCount;
 int Seg = 1;
 int OnOff;
 int red, bule;
-int OutRd;
 
 void setup() {
   ////////////////////////////////////
@@ -82,7 +83,6 @@ void setup() {
   Serial.print("get units: \t\t");
   Serial.println(scale.get_units(5), 1);        // print the average of 5 readings from the ADC minus tare weight, divided
   // by the SCALE parameter set with set_scale
-
 
   ////////////////////////////////////
   ////在程式初始時先放五個元素進陣列
@@ -314,26 +314,30 @@ void BuleAndRed() {
 ////胎壓數值
 ////////////////////////////////////
 void TirePressure() {
-  if (mySerial.available()) {
-    OutRd = mySerial.read();
-    if (OutRd == 85) { //如果是讀到85 就開始放值
-      TireArray[0] = OutRd;
-      for (int i = 1; i < 8; i++) {
-        TireArray[i] = mySerial.read();
-      }
+  int in1;
+  while (mySerial.available() > 0) {
+    in1 = mySerial.read();
+    if (in1 == 85) {
+      TireArray[0] = in1;
+    } else {
+      TireArray[TireCount] = in1;
     }
-    delay(110);  //測到最好的數值
-  } else { //如果沒讀到就歸零
-    for (int i = 0; i < TireNUMBER; i++) {
-      TireArray[i] = 0;
+    TireCount++;
+    if (TireCount == 8) {
+      TireCount = 0;
     }
-
   }
-  for (int i = 0; i < 8; i++) {
+}
+
+////////////////////////////////////
+////胎壓數值查看
+////////////////////////////////////
+void TirePrint() {
+  for (int i = 0; i < TireNUMBER; i++) {
     Serial.print(TireArray[i]);
     Serial.print("\t");
   }
-  Serial.println(" ");
+  Serial.println("");
 }
 
 ////////////////////////////////////
@@ -342,7 +346,6 @@ void TirePressure() {
 void SwitchOnOff() {
   OnOff = digitalRead(SW);
   if (OnOff == HIGH) {
-
     PutArray();
     //List();
     //delay(100);
@@ -352,8 +355,7 @@ void SwitchOnOff() {
     //CalculateByMedian();   ////中位數判斷
     VariancePulsByLoad();   ////平均值與標準差判斷
     TirePressure();
-
-
+    TirePrint();
   } else {
     BuleAndRed();
   }
@@ -361,6 +363,7 @@ void SwitchOnOff() {
 
 void loop() {
   SwitchOnOff();
+  
 }
 /*
   byte c[1];
