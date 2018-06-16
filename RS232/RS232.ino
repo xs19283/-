@@ -1,9 +1,10 @@
 #include <SoftwareSerial.h>
 
-
+unsigned long starttime;
+unsigned long endtime;
 
 int TireArray[8];
-void mySerialEvent(void);
+
 void TirePrint(void);
 int i;
 SoftwareSerial mySerial(2, 3); // RX, TX
@@ -16,10 +17,6 @@ void setup() {
 
 }
 
-void mySerialEvent() {
-
-
-}
 void TirePrint() {
   for (int i = 0; i < 8; i++) {
     Serial.print(TireArray[i]);
@@ -42,7 +39,7 @@ void loop() {
       i = 0;
     }
   }
-   TirePrint();
+  TirePrint();
 }
 
 /*int OutRd;
