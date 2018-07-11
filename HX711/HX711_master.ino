@@ -2,6 +2,7 @@
 #include <Servo.h>
 #include <Timer.h>
 #include <SoftwareSerial.h>
+#include <MsTimer2.h>
 
 SoftwareSerial mySerial(10, 11); // RX, TX
 Servo myservo; // 建立Servo物件，控制伺服馬達
@@ -22,6 +23,12 @@ int TireCount;
 int Seg = 1;
 int OnOff;
 int red, bule;
+int a;
+
+const int INTERVAL = 1;
+const int TireTime = 5;  //每9ms做一次胎壓
+const int AdxlTime = 0;
+const int Hx711Time = 0;
 
 void setup() {
   ////////////////////////////////////
@@ -83,7 +90,10 @@ void setup() {
   Serial.print("get units: \t\t");
   Serial.println(scale.get_units(5), 1);        // print the average of 5 readings from the ADC minus tare weight, divided
   // by the SCALE parameter set with set_scale
-
+  ////////////////////////////////////
+  ////設定胎壓定時中斷每0.9秒中斷一次
+  ////////////////////////////////////
+  MsTimer2::set(INTERVAL, MainTime);
   ////////////////////////////////////
   ////在程式初始時先放五個元素進陣列
   ////////////////////////////////////
@@ -95,6 +105,15 @@ void setup() {
   ////////////////////////////////////
   pinMode(LED, OUTPUT);
   digitalWrite(LED, HIGH);
+  MsTimer2::start();
+}
+////////////////////////////////////
+////右移陣列放值進第一元素
+////////////////////////////////////
+void MainTime(){
+  static unsigned int St=1;
+  ++St;
+  if(St % TireTime == 0) TirePressure();
 }
 
 ////////////////////////////////////
@@ -320,13 +339,14 @@ void TirePressure() {
     if (in1 == 85) {
       TireArray[0] = in1;
     } else {
-      TireArray[TireCount] = in1;
+      TireArray[a] = in1;
     }
-    TireCount++;
-    if (TireCount == 8) {
-      TireCount = 0;
+    a++;
+    if (a == 8) {
+      a = 0;
     }
   }
+  TirePrint();
 }
 
 ////////////////////////////////////
@@ -346,16 +366,16 @@ void TirePrint() {
 void SwitchOnOff() {
   OnOff = digitalRead(SW);
   if (OnOff == HIGH) {
-    PutArray();
+    PutArray();  
     //List();
     //delay(100);
-    SortByArray();
+    SortByArray();  
     //CalculateByLoad();      ////用平均值判斷
     //CalculateByVariance();  ////標準差判斷
     //CalculateByMedian();   ////中位數判斷
-    VariancePulsByLoad();   ////平均值與標準差判斷
-    TirePressure();
-    TirePrint();
+    VariancePulsByLoad();   ////平均值與標準差判斷   
+    //TirePressure();
+    
   } else {
     BuleAndRed();
   }
