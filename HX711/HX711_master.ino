@@ -50,7 +50,6 @@ void setup() {
   //myservo.attach(6, 500, 2400); // 修正脈衝寬度範圍
   myservo.attach(6);
 
-
   ////////////////////////////////////
   ////設定應變規初始設定
   ////////////////////////////////////
@@ -59,37 +58,10 @@ void setup() {
   // HX711.DOUT	- pin #A1
   // HX711.PD_SCK	- pin #A0
   scale.begin(A1, A0);
-  Serial.println("Before setting up the scale:");
-  Serial.print("read: \t\t");
-  Serial.println(scale.read());			// print a raw reading from the ADC
-
-  Serial.print("read average: \t\t");
-  Serial.println(scale.read_average(20));  	// print the average of 20 readings from the ADC
-
-  Serial.print("get value: \t\t");
-  Serial.println(scale.get_value(5));		// print the average of 5 readings from the ADC minus the tare weight (not set yet)
-
-  Serial.print("get units: \t\t");
-  Serial.println(scale.get_units(5), 1);	// print the average of 5 readings from the ADC minus tare weight (not set) divided
-  // by the SCALE parameter (not set yet)
 
   scale.set_scale(2280.f);                      // this value is obtained by calibrating the scale with known weights; see the README for details
   scale.tare();				        // reset the scale to 0
 
-  Serial.println("After setting up the scale:");
-
-  Serial.print("read: \t\t");
-  Serial.println(scale.read());                 // print a raw reading from the ADC
-
-  Serial.print("read average: \t\t");
-  Serial.println(scale.read_average(20));       // print the average of 20 readings from the ADC
-
-  Serial.print("get value: \t\t");
-  Serial.println(scale.get_value(5));		// print the average of 5 readings from the ADC minus the tare weight, set with tare()
-
-  Serial.print("get units: \t\t");
-  Serial.println(scale.get_units(5), 1);        // print the average of 5 readings from the ADC minus tare weight, divided
-  // by the SCALE parameter set with set_scale
   ////////////////////////////////////
   ////設定胎壓定時中斷每0.9秒中斷一次
   ////////////////////////////////////
@@ -110,10 +82,10 @@ void setup() {
 ////////////////////////////////////
 ////右移陣列放值進第一元素
 ////////////////////////////////////
-void MainTime(){
-  static unsigned int St=1;
+void MainTime() {
+  static unsigned int St = 1;
   ++St;
-  if(St % TireTime == 0) TirePressure();
+  if (St % TireTime == 0) TirePressure();
 }
 
 ////////////////////////////////////
@@ -366,16 +338,16 @@ void TirePrint() {
 void SwitchOnOff() {
   OnOff = digitalRead(SW);
   if (OnOff == HIGH) {
-    PutArray();  
+    PutArray();
     //List();
     //delay(100);
-    SortByArray();  
+    SortByArray();
     //CalculateByLoad();      ////用平均值判斷
     //CalculateByVariance();  ////標準差判斷
     //CalculateByMedian();   ////中位數判斷
-    VariancePulsByLoad();   ////平均值與標準差判斷   
+    VariancePulsByLoad();   ////平均值與標準差判斷
     //TirePressure();
-    
+
   } else {
     BuleAndRed();
   }
@@ -383,7 +355,7 @@ void SwitchOnOff() {
 
 void loop() {
   SwitchOnOff();
-  
+
 }
 /*
   byte c[1];
