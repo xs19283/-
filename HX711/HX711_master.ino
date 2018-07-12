@@ -23,7 +23,6 @@ int TireCount;
 int Seg = 1;
 int OnOff;
 int red, bule;
-int a;
 
 const int INTERVAL = 1;
 const int TireTime = 5;  //每9ms做一次胎壓
@@ -41,7 +40,7 @@ void setup() {
   ////////////////////////////////////
   ////設定Arduino鮑率及胎壓感測器鮑率
   ////////////////////////////////////
-  Serial.begin(9600);
+  Serial.begin(115200);
   mySerial.begin(9600);
 
   ////////////////////////////////////
@@ -53,8 +52,6 @@ void setup() {
   ////////////////////////////////////
   ////設定應變規初始設定
   ////////////////////////////////////
-  Serial.println("Initializing the scale");
-  // parameter "gain" is ommited; the default value 128 is used by the library
   // HX711.DOUT	- pin #A1
   // HX711.PD_SCK	- pin #A0
   scale.begin(A1, A0);
@@ -77,10 +74,11 @@ void setup() {
   ////////////////////////////////////
   pinMode(LED, OUTPUT);
   digitalWrite(LED, HIGH);
+  scale.power_down();
   MsTimer2::start();
 }
 ////////////////////////////////////
-////右移陣列放值進第一元素
+////主要控制中斷
 ////////////////////////////////////
 void MainTime() {
   static unsigned int St = 1;
@@ -92,10 +90,12 @@ void MainTime() {
 ////右移陣列放值進第一元素
 ////////////////////////////////////
 void PutArray () {
+  scale.power_up();
   for (int i = NUMBER - 1; i > 0; i--) {
     ForceArray[i] = ForceArray[i - 1];
   }
   ForceArray[0] = abs(scale.get_units());
+  scale.power_down();
 }
 
 ////////////////////////////////////
@@ -305,20 +305,19 @@ void BuleAndRed() {
 ////胎壓數值
 ////////////////////////////////////
 void TirePressure() {
-  int in1;
-  while (mySerial.available() > 0) {
-    in1 = mySerial.read();
-    if (in1 == 85) {
-      TireArray[0] = in1;
-    } else {
-      TireArray[a] = in1;
-    }
-    a++;
-    if (a == 8) {
-      a = 0;
-    }
+  MsTimer2::stop();
+  int out;
+  do{
+    out = mySerial.read();
+    Serial.println(out);
+  }while(out != 85);
+  TireArray[0] = out;
+  for(int i = 1; i < 8; i++){
+    TireArray[i] = mySerial.read();
   }
+  
   TirePrint();
+  MsTimer2::start();
 }
 
 ////////////////////////////////////
@@ -349,13 +348,15 @@ void SwitchOnOff() {
     //TirePressure();
 
   } else {
-    BuleAndRed();
+    BuleAndRed();  //如沒開就是按鍵式手動調整
   }
 }
 
+////////////////////////////////////
+////主要程式迴圈
+////////////////////////////////////
 void loop() {
   SwitchOnOff();
-
 }
 /*
   byte c[1];
