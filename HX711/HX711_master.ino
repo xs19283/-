@@ -24,8 +24,8 @@ int Seg = 1;
 int OnOff;
 int red, bule;
 
-const int INTERVAL = 1;
-const int TireTime = 5;  //每9ms做一次胎壓
+const int INTERVAL = 9;
+const int TireTime = 9;  //每9ms做一次胎壓
 const int AdxlTime = 0;
 const int Hx711Time = 0;
 
@@ -62,7 +62,7 @@ void setup() {
   ////////////////////////////////////
   ////設定胎壓定時中斷每0.9秒中斷一次
   ////////////////////////////////////
-  MsTimer2::set(INTERVAL, MainTime);
+  MsTimer2::set(INTERVAL, TirePressure);
   ////////////////////////////////////
   ////在程式初始時先放五個元素進陣列
   ////////////////////////////////////
@@ -305,19 +305,19 @@ void BuleAndRed() {
 ////胎壓數值
 ////////////////////////////////////
 void TirePressure() {
-  MsTimer2::stop();
   int out;
-  do{
+  do {
     out = mySerial.read();
     Serial.println(out);
-  }while(out != 85);
+  } while (out != 85);
   TireArray[0] = out;
-  for(int i = 1; i < 8; i++){
+  for (int i = 1; i < 8; i++) {
     TireArray[i] = mySerial.read();
+    delayMicroseconds(200);
   }
-  
+  mySerial.end();
   TirePrint();
-  MsTimer2::start();
+  mySerial.begin(9600);
 }
 
 ////////////////////////////////////
@@ -337,14 +337,14 @@ void TirePrint() {
 void SwitchOnOff() {
   OnOff = digitalRead(SW);
   if (OnOff == HIGH) {
-    PutArray();
+    //PutArray();
     //List();
     //delay(100);
-    SortByArray();
+    //SortByArray();    1
     //CalculateByLoad();      ////用平均值判斷
     //CalculateByVariance();  ////標準差判斷
     //CalculateByMedian();   ////中位數判斷
-    VariancePulsByLoad();   ////平均值與標準差判斷
+    //VariancePulsByLoad();   ////平均值與標準差判斷   1
     //TirePressure();
 
   } else {
@@ -356,7 +356,7 @@ void SwitchOnOff() {
 ////主要程式迴圈
 ////////////////////////////////////
 void loop() {
-  SwitchOnOff();
+  //SwitchOnOff();
 }
 /*
   byte c[1];
