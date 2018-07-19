@@ -5,7 +5,7 @@ volatile int count2 = 0;
 volatile int total = 0;
 
 int TireArray[8];
-
+int TempArray[8];
 void TirePrint() {
   for (int i = 0; i < 8; i++) {
     Serial.print(TireArray[i]);
@@ -15,17 +15,29 @@ void TirePrint() {
 }
 
 static void vCount1Task_1(void *pvParameters) {
-  int in1;
+  int total = 0;
+  byte temp = 0;
   for (;;) {
-    int OutRd;
-    if ((OutRd = Serial.read()) == 85) {
-      TireArray[0] = OutRd;
+    if (Serial.peek() == 85) {
+      TempArray[0] = Serial.read();
       for (int i = 1; i < 8; i++) {
-        TireArray[i] = Serial.read();
+        TempArray[i] = Serial.read();
       }
+      total = TempArray[0] + TempArray[1] + TempArray[2] + TempArray[3] + TempArray[4] + TempArray[5] + TempArray[6];
+      temp = (byte)(~total + 1);
+      if (temp == TempArray[7]) {
+        for (int i = 0; i < 8; i++) {
+          TireArray[i] = TempArray[i];
+        }
+        TirePrint();
+      } else {
+        vTaskDelay((10L * configTICK_RATE_HZ) / 1000L);
+      }
+    } else {
+      Serial.read();
+      vTaskDelay((10L * configTICK_RATE_HZ) / 1000L);
     }
     TirePrint();
-    vTaskDelay((9L * configTICK_RATE_HZ) / 1000L);
   }
 }
 static void vCountTask_2(void *pvParameters) {
