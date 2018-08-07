@@ -1,18 +1,20 @@
-
+#include <Servo.h>
+Servo myservo;
 const int analogInPin = A0;  // Analog input pin that the potentiometer is attached to
 int sensorValue = 0;        // value read from the pot
 void setup() {
   Serial.begin(9600);
+  myservo.attach(7);
+  myservo.write(50);
 }
 void loop() {
+  
   sensorValue = analogRead(analogInPin);
-
   Serial.print("sensor = ");
   Serial.println(sensorValue);
-
-  delay(2);
+  delay(200);
 }
-/*
+
 void MotorCmd(int angle) {
   switch (angle) {
     case 1:
@@ -34,4 +36,4 @@ void MotorCmd(int angle) {
       myservo.write(125);
       break;
   }
-}*/
+}
