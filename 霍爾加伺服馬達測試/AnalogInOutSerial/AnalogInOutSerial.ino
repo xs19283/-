@@ -3,23 +3,35 @@ Servo myservo;
 
 #define NUMBER 5
 
+float avg;
 float ForceArray [NUMBER];
 float SortArray [NUMBER];
 const int analogInPin = A0;  // 霍爾感測輸入端
 int sensorValue = 0;        // 霍爾感測器數值
+
+float TriaxialArray [NUMBER];
+float SortTriaxial [NUMBER];
+const int TriaxialPin = A1;  // 三軸感測輸入端
+int TriaxialValue = 0;        // 三軸感測器數值
 
 void setup() {
   Serial.begin(9600);
   myservo.attach(6);
 
   ////////////////////////////////////
-  ////在程式初始時先放五個元素進陣列
+  ////在程式初始時先放五個霍爾元素進陣列
   ////////////////////////////////////
   for (int i = 0; i < NUMBER; i++) {
     ForceArray[i] = analogRead(analogInPin);
   }
-
   sensorValue = analogRead(analogInPin);
+  ////////////////////////////////////
+  ////在程式初始時先放五個三軸元素進陣列
+  ////////////////////////////////////
+  for (int i = 0; i < NUMBER; i++) {
+    TriaxialArray[i] = analogRead(TriaxialPin);
+  }
+  TriaxialValue = analogRead(TriaxialPin);
 }
 
 //////////////////////////////////////////////////////////////////////涵式部分
@@ -27,11 +39,21 @@ void setup() {
 ////////////////////////////////////
 ////右移陣列放值進第一元素
 ////////////////////////////////////
-void PutArray () {
+void PutArray1 () {
   for (int i = NUMBER - 1; i > 0; i--) {
     ForceArray[i] = ForceArray[i - 1];
   }
   ForceArray[0] = analogRead(analogInPin);
+}
+
+////////////////////////////////////
+////右移陣列放值進第一元素
+////////////////////////////////////
+void PutArray2 () {
+  for (int i = NUMBER - 1; i > 0; i--) {
+    TriaxialArray[i] = TriaxialArray[i - 1];
+  }
+  TriaxialArray[0] = analogRead(TriaxialValue);
 }
 
 ////////////////////////////////////
@@ -74,20 +96,21 @@ void MotorCmd(int angle) {
 ////標準差加平均值
 ////////////////////////////////////
 void VariancePulsByLoad () {
-  float sum1, sum2, total, avg;
-  sum1 = pow(SortArray[1] - SortArray[2], 2);
-  sum2 = pow(SortArray[3] - SortArray[2], 2);
+  float sum1, sum2, total;
+  sum1 = pow(SortTriaxial[1] - SortTriaxial[2], 2);
+  sum2 = pow(SortTriaxial[3] - SortTriaxial[2], 2);
   total = sqrt(sum1 + sum2);
-  Serial.println(total);
 
   avg = total;
-  MotorCmd(6);
-  if (avg < 20) {
-    CalculateByLoad0 ();
-  } else if (avg >= 20) {
-    CalculateByLoad1 ();
-  }
 
+  /*
+    MotorCmd(6);
+    if (avg < 20) {
+    CalculateByLoad0 ();
+    } else if (avg >= 20) {
+    CalculateByLoad1 ();
+    }
+  */
 }
 
 ////////////////////////////////////
@@ -140,9 +163,9 @@ float Average() {
 }
 
 ////////////////////////////////////
-////陣列排序
+////霍爾陣列排序
 ////////////////////////////////////
-void SortByArray() {
+void SortByArray1() {
   float temp;
 
   for (int i = 0; i < NUMBER; i++) {
@@ -160,6 +183,26 @@ void SortByArray() {
   }
 }
 
+////////////////////////////////////
+////三軸陣列排序
+////////////////////////////////////
+void SortByArray2() {
+  float temp;
+
+  for (int i = 0; i < NUMBER; i++) {
+    SortTriaxial[i] = TriaxialArray[i];
+  }
+
+  for (int i = 0; i < NUMBER - 1; i++) {
+    for (int j = 0; j < NUMBER - 1; j++) {
+      if (SortTriaxial[j + 1] < SortTriaxial[j]) {
+        temp = SortTriaxial[j];
+        SortTriaxial[j] = SortTriaxial[j + 1];
+        SortTriaxial[j + 1] = temp;
+      }
+    }
+  }
+}
 
 ////////////////////////////////////
 ////中位數判斷
@@ -191,11 +234,16 @@ void CalculateByMedian() {
 //////////////////////////////////////////////////////////////////////涵式部分結束
 
 void loop() {
-  PutArray();
-  SortByArray();
-  CalculateByMedian();
+  PutArray1();
+  PutArray2();
+  SortByArray1();
+  SortByArray2();
+  VariancePulsByLoad();
+  Serial.println(avg);
 
-  delay(100);
+
+  //CalculateByMedian();
+
 }
 
 
