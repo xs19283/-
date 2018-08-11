@@ -3,7 +3,7 @@ Servo myservo;
 
 #define NUMBER 5
 
-float avg;
+float sumALL;
 float ForceArray [NUMBER];
 float SortArray [NUMBER];
 const int analogInPin = A0;  // 霍爾感測輸入端
@@ -17,6 +17,9 @@ int TriaxialValue = 0;        // 三軸感測器數值
 void setup() {
   Serial.begin(9600);
   myservo.attach(6);
+
+  pinMode(analogInPin, INPUT);
+  pinMode(TriaxialPin, INPUT);
 
   ////////////////////////////////////
   ////在程式初始時先放五個霍爾元素進陣列
@@ -53,7 +56,7 @@ void PutArray2 () {
   for (int i = NUMBER - 1; i > 0; i--) {
     TriaxialArray[i] = TriaxialArray[i - 1];
   }
-  TriaxialArray[0] = analogRead(TriaxialValue);
+  TriaxialArray[0] = analogRead(TriaxialPin);
 }
 
 ////////////////////////////////////
@@ -96,12 +99,12 @@ void MotorCmd(int angle) {
 ////標準差加平均值
 ////////////////////////////////////
 void VariancePulsByLoad () {
-  float sum1, sum2, total;
+  float sum1, sum2, ToTal;
   sum1 = pow(SortTriaxial[1] - SortTriaxial[2], 2);
   sum2 = pow(SortTriaxial[3] - SortTriaxial[2], 2);
-  total = sqrt(sum1 + sum2);
+  ToTal = sqrt(sum1 + sum2);
 
-  avg = total;
+  sumALL = ToTal;
 
   /*
     MotorCmd(6);
@@ -207,9 +210,9 @@ void SortByArray2() {
 ////////////////////////////////////
 ////中位數判斷
 ////////////////////////////////////
-void CalculateByMedian() {
+void CalculateByMedian1() {
 
-  float median, avg;
+  float median, total, avg;
   median = SortArray[2];
   Serial.println(median, 1);
   float value = abs(sensorValue - median);
@@ -229,6 +232,21 @@ void CalculateByMedian() {
   } else {
     MotorCmd(1);
   }
+  delay(200);
+}
+
+////////////////////////////////////
+////中位數判斷
+////////////////////////////////////
+void CalculateByMedian2() {
+
+  float median, total;
+  median = SortTriaxial[2];
+  Serial.println(median, 1);
+  float Triavalue = abs(TriaxialValue - median);
+  Serial.println(Triavalue);
+  sumALL = Triavalue;
+
 }
 
 //////////////////////////////////////////////////////////////////////涵式部分結束
@@ -236,14 +254,19 @@ void CalculateByMedian() {
 void loop() {
   PutArray1();
   PutArray2();
+  PutArray2();
+  PutArray2();
   SortByArray1();
   SortByArray2();
-  VariancePulsByLoad();
-  Serial.println(avg);
-
-
-  //CalculateByMedian();
-
+  //VariancePulsByLoad();
+  CalculateByMedian2();
+  
+  Serial.print("三軸");
+  Serial.println(sumALL);
+  
+  if (sumALL > 5.0) {
+    CalculateByMedian1();
+  }
+  
+  
 }
-
-
