@@ -133,6 +133,7 @@ void CalculateByLoad0 () {
     MotorCmd(2);
   }  else {
     MotorCmd(1);
+    sensorValue = analogRead(analogInPin);
   }
 }
 
@@ -231,8 +232,9 @@ void CalculateByMedian1() {
     MotorCmd(2);
   } else {
     MotorCmd(1);
+    
   }
-  delay(200);
+  delay(100);
 }
 
 ////////////////////////////////////
@@ -252,6 +254,7 @@ void CalculateByMedian2() {
 //////////////////////////////////////////////////////////////////////涵式部分結束
 
 void loop() {
+  /*
   PutArray1();
   PutArray2();
   PutArray2();
@@ -267,6 +270,9 @@ void loop() {
   if (sumALL > 5.0) {
     CalculateByMedian1();
   }
-  
-  
+  */
+  MotorCmd(1);
+  delay(1000);
+  MotorCmd(6);
+  delay(1000);
 }
