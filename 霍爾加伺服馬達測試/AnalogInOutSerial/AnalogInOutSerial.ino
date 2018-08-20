@@ -75,22 +75,22 @@ void List() {
 void MotorCmd(int angle) {
   switch (angle) {
     case 1:
-      myservo.write(60);
+      myservo.write(0);
       break;
     case 2:
-      myservo.write(80);
+      myservo.write(25);
       break;
     case 3:
-      myservo.write(100);
+      myservo.write(50);
       break;
     case 4:
-      myservo.write(125);
+      myservo.write(80);
       break;
     case 5:
-      myservo.write(145);
+      myservo.write(100);
       break;
     case 6:
-      myservo.write(170);
+      myservo.write(125);
       break;
   }
 }
@@ -271,8 +271,6 @@ void loop() {
     CalculateByMedian1();
   }
   */
-  MotorCmd(1);
-  delay(1000);
-  MotorCmd(6);
-  delay(1000);
+  
+  myservo.write(125);
 }
