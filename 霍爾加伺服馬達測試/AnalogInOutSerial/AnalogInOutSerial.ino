@@ -2,19 +2,33 @@
 Servo myservo;
 
 #define NUMBER 5
+#define LED 7
+#define BUTTONRED 12
+#define BUTTONBULE 13
+#define SW 8
 
 float sumALL;
 float ForceArray [NUMBER];
 float SortArray [NUMBER];
-const int analogInPin = A0;  // 霍爾感測輸入端
+const int analogInPin = A4;  // 霍爾感測輸入端
 int sensorValue = 0;        // 霍爾感測器數值
 
 float TriaxialArray [NUMBER];
 float SortTriaxial [NUMBER];
-const int TriaxialPin = A1;  // 三軸感測輸入端
+const int TriaxialPin = A3;  // 三軸感測輸入端
 int TriaxialValue = 0;        // 三軸感測器數值
+int Seg = 1;        //為手動調整伺服馬達變數
+int red, bule;      //按鈕變數
+int OnOff;          //監控是否自動手動變數
 
 void setup() {
+  ////////////////////////////////////
+  ////設定開關跟按鈕
+  ////////////////////////////////////
+  pinMode(BUTTONRED, INPUT);
+  pinMode(BUTTONBULE, INPUT);
+  pinMode(SW, INPUT_PULLUP);
+
   Serial.begin(9600);
   myservo.attach(6);
 
@@ -35,6 +49,11 @@ void setup() {
     TriaxialArray[i] = analogRead(TriaxialPin);
   }
   TriaxialValue = analogRead(TriaxialPin);
+  ////////////////////////////////////
+  ////所有設定已完成 LED亮起
+  ////////////////////////////////////
+  pinMode(LED, OUTPUT);
+  digitalWrite(LED, HIGH);
 }
 
 //////////////////////////////////////////////////////////////////////涵式部分
@@ -232,7 +251,7 @@ void CalculateByMedian1() {
     MotorCmd(2);
   } else {
     MotorCmd(1);
-    
+
   }
   delay(100);
 }
@@ -251,26 +270,56 @@ void CalculateByMedian2() {
 
 }
 
+////////////////////////////////////
+////按鈕控制馬達
+////////////////////////////////////
+void BuleAndRed() {
+
+  red = digitalRead(BUTTONRED);
+  bule = digitalRead(BUTTONBULE);
+  if (red == HIGH && Seg < 6) {
+    Seg++;
+    MotorCmd(Seg);
+    delay(250);
+  } else if (bule == HIGH && Seg > 1) {
+    Seg--;
+    MotorCmd(Seg);
+    delay(250);
+  }
+}
+
+////////////////////////////////////
+////開關判斷
+////////////////////////////////////
+void SwitchOnOff() {
+  OnOff = digitalRead(SW);
+  if (OnOff == HIGH) {
+    PutArray1();
+    PutArray2();
+    PutArray2();
+    PutArray2();
+    SortByArray1();
+    SortByArray2();
+    //VariancePulsByLoad();
+    CalculateByMedian2();
+
+    Serial.print("三軸");
+    Serial.println(sumALL);
+
+    if (sumALL > 5.0 && sumALL <= 40.0) {
+      CalculateByMedian1();
+    } else if (sumALL > 40.0) {
+      MotorCmd(6);
+      delay(2000);
+    }
+
+  } else {
+    BuleAndRed();  //如沒開就是按鍵式手動調整
+  }
+}
+
 //////////////////////////////////////////////////////////////////////涵式部分結束
 
 void loop() {
-  /*
-  PutArray1();
-  PutArray2();
-  PutArray2();
-  PutArray2();
-  SortByArray1();
-  SortByArray2();
-  //VariancePulsByLoad();
-  CalculateByMedian2();
-  
-  Serial.print("三軸");
-  Serial.println(sumALL);
-  
-  if (sumALL > 5.0) {
-    CalculateByMedian1();
-  }
-  */
-  
-  myservo.write(125);
+  SwitchOnOff();
 }
