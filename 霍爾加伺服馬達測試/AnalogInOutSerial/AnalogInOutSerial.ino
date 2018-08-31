@@ -2,24 +2,36 @@
 Servo myservo;
 
 #define NUMBER 5
+#define TrixNum 7
 #define LED 7
 #define BUTTONRED 12
 #define BUTTONBULE 13
 #define SW 8
 
-float sumALL;
 float ForceArray [NUMBER];
 float SortArray [NUMBER];
 const int analogInPin = A4;  // 霍爾感測輸入端
 int sensorValue = 0;        // 霍爾感測器數值
+int Halls;
 
 float TriaxialArray [NUMBER];
 float SortTriaxial [NUMBER];
 const int TriaxialPin = A3;  // 三軸感測輸入端
 int TriaxialValue = 0;        // 三軸感測器數值
+int sumALL;
+
+float XAxisArray [NUMBER];
+float SortXAxis [NUMBER];
+const int xAxis = A2;
+int xAxisValue = 0;
+int XData;
+
 int Seg = 1;        //為手動調整伺服馬達變數
 int red, bule;      //按鈕變數
 int OnOff;          //監控是否自動手動變數
+
+boolean pass = true;  //監控藍芽有沒有連上
+int mode;             //監控模式
 
 void setup() {
   ////////////////////////////////////
@@ -34,6 +46,7 @@ void setup() {
 
   pinMode(analogInPin, INPUT);
   pinMode(TriaxialPin, INPUT);
+  pinMode(xAxis, INPUT);
 
   ////////////////////////////////////
   ////在程式初始時先放五個霍爾元素進陣列
@@ -43,12 +56,27 @@ void setup() {
   }
   sensorValue = analogRead(analogInPin);
   ////////////////////////////////////
-  ////在程式初始時先放五個三軸元素進陣列
+  ////在程式初始時先放五個X軸元素進陣列
+  ////////////////////////////////////
+  for (int i = 0; i < NUMBER; i++) {
+    XAxisArray[i] = analogRead(xAxis);
+  }
+  xAxisValue = analogRead(xAxis);
+  ////////////////////////////////////
+  ////在程式初始時先放五個Z軸元素進陣列
   ////////////////////////////////////
   for (int i = 0; i < NUMBER; i++) {
     TriaxialArray[i] = analogRead(TriaxialPin);
   }
   TriaxialValue = analogRead(TriaxialPin);
+  ////////////////////////////////////
+  ////藍芽初始化
+  ////////////////////////////////////
+  pinMode(9, OUTPUT);
+  digitalWrite(9, HIGH);
+
+
+  Serial.println("OK");
   ////////////////////////////////////
   ////所有設定已完成 LED亮起
   ////////////////////////////////////
@@ -56,7 +84,6 @@ void setup() {
   digitalWrite(LED, HIGH);
 }
 
-//////////////////////////////////////////////////////////////////////涵式部分
 
 ////////////////////////////////////
 ////右移陣列放值進第一元素
@@ -76,6 +103,16 @@ void PutArray2 () {
     TriaxialArray[i] = TriaxialArray[i - 1];
   }
   TriaxialArray[0] = analogRead(TriaxialPin);
+}
+
+////////////////////////////////////
+////右移陣列放值進第一元素
+////////////////////////////////////
+void PutArray3 () {
+  for (int i = NUMBER - 1; i > 0; i--) {
+    XAxisArray[i] = XAxisArray[i - 1];
+  }
+  XAxisArray[0] = analogRead(xAxis);
 }
 
 ////////////////////////////////////
@@ -119,11 +156,11 @@ void MotorCmd(int angle) {
 ////////////////////////////////////
 void VariancePulsByLoad () {
   float sum1, sum2, ToTal;
-  sum1 = pow(SortTriaxial[1] - SortTriaxial[2], 2);
-  sum2 = pow(SortTriaxial[3] - SortTriaxial[2], 2);
+  sum1 = pow(SortArray[1] - SortArray[2], 2);
+  sum2 = pow(SortArray[3] - SortArray[2], 2);
   ToTal = sqrt(sum1 + sum2);
 
-  sumALL = ToTal;
+  Halls = ToTal;
 
   /*
     MotorCmd(6);
@@ -228,16 +265,39 @@ void SortByArray2() {
 }
 
 ////////////////////////////////////
+////三軸陣列排序
+////////////////////////////////////
+void SortByArray3() {
+  float temp;
+
+  for (int i = 0; i < NUMBER; i++) {
+    SortXAxis[i] = XAxisArray[i];
+  }
+
+  for (int i = 0; i < NUMBER - 1; i++) {
+    for (int j = 0; j < NUMBER - 1; j++) {
+      if (SortXAxis[j + 1] < SortXAxis[j]) {
+        temp = SortXAxis[j];
+        SortXAxis[j] = SortXAxis[j + 1];
+        SortXAxis[j + 1] = temp;
+      }
+    }
+  }
+}
+
+////////////////////////////////////
 ////中位數判斷
 ////////////////////////////////////
 void CalculateByMedian1() {
 
   float median, total, avg;
   median = SortArray[2];
-  Serial.println(median, 1);
-  float value = abs(sensorValue - median);
-  Serial.println(value);
+  float value = abs(sensorValue - median);/*
+  Serial.print("霍爾:");
+  Serial.println(value);*/
+  Halls = value;
   avg = value;
+
 
   if (avg > 110) {
     MotorCmd(6);
@@ -249,9 +309,8 @@ void CalculateByMedian1() {
     MotorCmd(3);
   } else if (avg < 40 && avg >= 20) {
     MotorCmd(2);
-  } else {
+  } else if (avg < 20) {
     MotorCmd(1);
-
   }
   delay(100);
 }
@@ -263,10 +322,20 @@ void CalculateByMedian2() {
 
   float median, total;
   median = SortTriaxial[2];
-  Serial.println(median, 1);
   float Triavalue = abs(TriaxialValue - median);
-  Serial.println(Triavalue);
   sumALL = Triavalue;
+
+}
+
+////////////////////////////////////
+////中位數判斷
+////////////////////////////////////
+void CalculateByMedian3() {
+
+  float median, total;
+  median = SortXAxis[2];
+  float Xvalue = abs(xAxisValue - median);
+  XData = median;
 
 }
 
@@ -291,28 +360,68 @@ void BuleAndRed() {
 ////////////////////////////////////
 ////開關判斷
 ////////////////////////////////////
+void BlueToothSendData() {
+  /*Serial.write(85);
+  Serial.write(int(sumALL));
+  Serial.write(int(XData));
+  Serial.write(int(Halls));
+  Serial.write(mode);*/
+  Serial.write(85);
+  Serial.write(analogRead(xAxis));
+  Serial.write(analogRead(TriaxialPin));
+  Serial.write(analogRead(analogInPin));
+  Serial.write(1);
+  
+}
+
+////////////////////////////////////
+////開關判斷
+////////////////////////////////////
+void ModeSwitch() {
+  if (sumALL < 10) {
+    MotorCmd(1);
+    mode = 1;
+  } else if (sumALL >= 10 && sumALL <= 30) {
+    CalculateByMedian1();
+    mode = 2;
+  } else if (sumALL > 30 && Halls < 10) {
+    MotorCmd(6);
+    mode = 4;
+    delay(500);
+  } else if (XData > 560 && sumALL > 5) {
+    MotorCmd(2);
+    mode = 3;
+  }
+  if (digitalRead(2) == HIGH && Halls > 10) {
+    MotorCmd(2);
+    mode = 5;
+    delay(2000);
+  }
+}
+
+////////////////////////////////////
+////開關判斷
+////////////////////////////////////
 void SwitchOnOff() {
   OnOff = digitalRead(SW);
   if (OnOff == HIGH) {
     PutArray1();
     PutArray2();
-    PutArray2();
-    PutArray2();
+    PutArray3();
     SortByArray1();
     SortByArray2();
+    SortByArray3();
     //VariancePulsByLoad();
+    MotorCmd(1);
+    /*
     CalculateByMedian2();
-
-    Serial.print("三軸");
-    Serial.println(sumALL);
-
-    if (sumALL > 5.0 && sumALL <= 40.0) {
-      CalculateByMedian1();
-    } else if (sumALL > 40.0) {
-      MotorCmd(6);
-      delay(2000);
-    }
-
+    CalculateByMedian3();
+    ModeSwitch();
+    */
+    
+    BlueToothSendData();
+    
+    delay(50);
   } else {
     BuleAndRed();  //如沒開就是按鍵式手動調整
   }
