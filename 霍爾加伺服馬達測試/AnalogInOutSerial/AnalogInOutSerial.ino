@@ -32,8 +32,6 @@ int OnOff;          //監控是否自動手動變數
 
 int NowMode;        //監控模式
 
-
-
 void setup() {
   ////////////////////////////////////
   ////設定開關跟按鈕
@@ -67,7 +65,10 @@ void setup() {
   digitalWrite(LED, HIGH);
 }
 
-void PutValueArray(float Array[], int StartValue, int Pin){
+////////////////////////////////////
+////陣列初始化完放五個元素
+////////////////////////////////////
+void PutValueArray(float Array[], int StartValue, int Pin) {
   for (int i = 0; i < NUMBER; i++) {
     Array[i] = analogRead(Pin);
   }
@@ -120,16 +121,18 @@ void MotorCmd(int angle) {
   }
 }
 
+
+
 ////////////////////////////////////
 ////標準差加平均值
 ////////////////////////////////////
-void VariancePulsByLoad () {
-  float sum1, sum2, ToTal;
+void VariancePulsByLoad (float SortArray[], int SendData) {
+  float Sum1, Sum2, ToTal;
 
-  sum1 = pow(HallSortArray[1] - HallSortArray[2], 2);
-  sum2 = pow(HallSortArray[3] - HallSortArray[2], 2);
-  ToTal = sqrt(sum1 + sum2);
-  SendHall = ToTal;
+  Sum1 = pow(SortArray[1] - SortArray[2], 2);
+  Sum2 = pow(SortArray[3] - SortArray[2], 2);
+  ToTal = sqrt(Sum1 + Sum2);
+  SendData = ToTal;
 }
 
 ////////////////////////////////////
@@ -190,7 +193,6 @@ void CalculateByMedian(float SortArray[], int StartValue, int Send) {
   Median = SortArray[2];
   float CalculateValue = abs(StartValue - Median);
   Send = CalculateValue;
-
 }
 
 ////////////////////////////////////
@@ -233,24 +235,26 @@ void BluetoothSendData() {
 ////模式選擇
 ////////////////////////////////////
 void NowModeSwitch() {
-  if (SendZ < 10) {
-    MotorCmd(1);
-    NowMode = 1;
-  } else if (SendZ >= 10 && SendZ <= 30) {
-    CalculateHallByMedian();
-    NowMode = 2;
-  } else if (SendZ > 30 && SendHall < 10) {
+  if (SendZ > 5 && SendHall <= 10) {
     MotorCmd(6);
-    NowMode = 4;
-    delay(500);
-  } else if (SendX > 560 && SendZ > 5) {
-    MotorCmd(2);
-    NowMode = 3;
-  }
-  if (digitalRead(2) == HIGH && SendHall > 10) {
-    MotorCmd(2);
     NowMode = 5;
     delay(2000);
+  } else if (SendZ > 5 && SendHall > 10) {
+    if (SendHall > 10) {
+      MotorCmd(3);
+      NowMode = 2;
+      delay(1000);
+    } else if (SendHall > 50) {
+      MotorCmd(4);
+      NowMode = 2;
+      delay(1000);
+    } else if (SendX > 40) {
+      MotorCmd(1);
+      NowMode = 1;
+    } else if (SendX <= 10) {
+      MotorCmd(1);
+      NowMode = 1;
+    }
   }
 }
 
@@ -266,7 +270,9 @@ void SwitchOnOff() {
     SortByArray(HallSortArray, HallArray);
     SortByArray(ZSortArray, ZAxisArray);
     SortByArray(XSortArray, XAxisArray);
-    //VariancePulsByLoad();
+    VariancePulsByLoad(HallSortArray, SendHall);
+    VariancePulsByLoad(ZSortArray, SendZ);
+    VariancePulsByLoad(XSortArray, SendX);
     /*
         CalculateByMedian(ZSortArray, ZStartValue, SendZ);
         CalculateByMedian(XSortArray, XStartValue, SendX);
