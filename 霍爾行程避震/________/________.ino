@@ -266,6 +266,7 @@ void BluetoothSendData() {
   Serial.write(SendX);
   Serial.write(SendZ);
   Serial.write(SendHall);
+  Serial.write(int(angle));
   Serial.write(NowMode);
 
   /*
@@ -292,8 +293,12 @@ void NowModeSwitch() {
       MotorCmd(3);
       NowMode = 2;
       delay(500);
-    } else if (SendHall > 50) {
+    } else if (SendHall > 30) {
       MotorCmd(4);
+      NowMode = 2;
+      delay(500);
+    }else if(SendHall>50){
+      MotorCmd(5);
       NowMode = 2;
       delay(500);
     }
@@ -304,6 +309,7 @@ void NowModeSwitch() {
   } else if (SendX <= 1000) {
     MotorCmd(1);
     NowMode = 1;
+    delay(500);
   }
 }
 
@@ -320,13 +326,9 @@ void SwitchOnOff() {
     VariancePulsByLoad(XSortArray, &SendX);
     VariancePulsByLoad(ZSortArray, &SendZ);
     VariancePulsByLoad(HallSortArray, &SendHall);
-    Serial.print(SendX); Serial.print("  ");
-    Serial.print(SendZ); Serial.print("  ");
-    Serial.print(SendHall); Serial.print("  ");
     Angletest();
-    Serial.print(angle); Serial.println("  ");
-    //NowModeSwitch();
-    //BluetoothSendData();
+    NowModeSwitch();
+    BluetoothSendData();
   } else {
     BlueAndRed();
   }
