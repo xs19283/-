@@ -2,16 +2,10 @@
 #include<Servo.h>
 #include "I2Cdev.h"
 #include "MPU6050.h"
-#include <MsTimer2.h>
 
 //////////////////////實例化物件//////////////////////
 Servo myservo;
 MPU6050 mpu;
-
-//////////////////////時間中斷變數//////////////////////
-int XTime = 30;
-int ZTime = 20;
-int HallTime = 10;
 
 //////////////////////五大模式變數//////////////////////
 int NowMode;
@@ -86,38 +80,20 @@ void setup() {
   pinMode(9, OUTPUT);
   digitalWrite(9, HIGH);
   delay(1000);
-  //////////////////////時間中斷涵式//////////////////////
-  MsTimer2::set(1, MainTimer);
-  MsTimer2::start();
+  //////////////////////外部中斷設定//////////////////////
+  attachInterrupt(0, InteHall, HIGH); //assign int0
   //////////////////////所有設定已完成 LED亮起//////////////////////
   pinMode(LED, OUTPUT);
   digitalWrite(LED, HIGH);
 }
 
-void MainTimer() {
-  static unsigned int Timeing = 0;
-  ++Timeing;
-  if (Timeing % XTime == 0) XAxisReadValue();
-  if (Timeing % HallTime == 0) HallReadValue();
-  if (Timeing % ZTime == 0) ZAxisReadValue();
-}
-
-void XAxisReadValue() {
-  ShiftRightArray(XAxisArray, "X");
-  SortByArray(XSortArray, XAxisArray);
-  VariancePulsByLoad(XSortArray, &SendX);
-}
-
-void ZAxisReadValue() {
-  ShiftRightArray(ZAxisArray, "Z");
-  SortByArray(ZSortArray, ZAxisArray);
-  VariancePulsByLoad(ZSortArray, &SendZ);
-}
-
-void HallReadValue() {
-  ShiftRightArray(HallArray, HallPin);
-  SortByArray(HallSortArray, HallArray);
-  VariancePulsByLoad(HallSortArray, &SendHall);
+//////////////////////外部中斷涵式//////////////////////
+void InteHall() {
+  if (SendX > 1000) {
+    MotorCmd(2);
+    NowMode = 5;
+    delay(1000);
+  }
 }
 
 //////////////////////霍爾陣列初始化完放五個元素//////////////////////
@@ -303,25 +279,29 @@ void BluetoothSendData() {
 
 //////////////////////模式選擇//////////////////////
 void NowModeSwitch() {
-  if (SendZ > 40 && SendHall <= 20) {
+  if (SendZ > 1000 && SendHall <= 20) {
     MotorCmd(6);
-    NowMode = 5;
+    NowMode = 4;
     delay(2000);
-  } else if (SendZ > 5 && SendHall > 10) {
+  } else if (angle > 43) {
+    MotorCmd(2);
+    NowMode = 3;
+    delay(1000);
+  } else if (SendZ > 400 && SendHall > 10) {
     if (SendHall > 10) {
       MotorCmd(3);
       NowMode = 2;
-      delay(1000);
+      delay(500);
     } else if (SendHall > 50) {
       MotorCmd(4);
       NowMode = 2;
-      delay(1000);
+      delay(500);
     }
-  } else if (SendX > 40) {
+  } else if (SendX > 1000) {
     MotorCmd(1);
     NowMode = 1;
     delay(2000);
-  } else if (SendX <= 10) {
+  } else if (SendX <= 1000) {
     MotorCmd(1);
     NowMode = 1;
   }
@@ -331,13 +311,23 @@ void NowModeSwitch() {
 void SwitchOnOff() {
   OnOff = digitalRead(SW);
   if (OnOff == HIGH) {
+    ShiftRightArray(XAxisArray, "X");
+    ShiftRightArray(ZAxisArray, "Z");
+    ShiftRightArray(HallArray, HallPin);
+    SortByArray(XSortArray, XAxisArray);
+    SortByArray(ZSortArray, ZAxisArray);
+    SortByArray(HallSortArray, HallArray);
+    VariancePulsByLoad(XSortArray, &SendX);
+    VariancePulsByLoad(ZSortArray, &SendZ);
+    VariancePulsByLoad(HallSortArray, &SendHall);
+    Serial.print(SendX); Serial.print("  ");
+    Serial.print(SendZ); Serial.print("  ");
+    Serial.print(SendHall); Serial.print("  ");
+    Angletest();
+    Serial.print(angle); Serial.println("  ");
     //NowModeSwitch();
-    Serial.print(1);Serial.println(" ");
-    Serial.print(SendZ);Serial.println(" ");
-    Serial.print(SendHall);Serial.println(" ");
     //BluetoothSendData();
   } else {
-    MsTimer2::stop();
     BlueAndRed();
   }
 }
