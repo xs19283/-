@@ -35,7 +35,9 @@ int SendZ;
 //////////////////////Z軸相關變數及陣列//////////////////////
 float XAxisArray[NUMBER];
 float XSortArray[NUMBER];
+int XStartValue = 0;
 int SendX;
+int MedienX;
 
 //////////////////////姿態感測收值變數//////////////////////
 int16_t ax, ay, az, gx, gy, gz;
@@ -64,7 +66,7 @@ float dt = timeChange * 0.001; //注意：dt的取值为滤波器采样时间
 int CtrlInti = 0;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   //////////////////////設定開關跟按鈕//////////////////////
   pinMode(BUTTONRED, INPUT);
   pinMode(BUTTONBULE, INPUT);
@@ -114,13 +116,14 @@ void PutValueArray(float Array[], String Axis) {
   if (Axis == "X") {
     for (int i = 0; i < NUMBER; i++) {
       mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-      Array[i] = ax;
+      Array[i] = (ay / 16384.0f) * 100;
     }
+    XStartValue = (ay / 16384.0f) * 100;
   }
   if (Axis == "Z") {
     for (int i = 0; i < NUMBER; i++) {
       mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-      Array[i] = az;
+      Array[i] = (az / 16384.0f) * 100;;
     }
   }
 }
@@ -140,11 +143,11 @@ void ShiftRightArray(float Array[], String Axis) {
   }
   if (Axis == "X") {
     mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-    Array[0] = ax;
+    Array[0] = (ay / 16384.0f) * 100;;
   }
   if (Axis == "Z") {
     mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-    Array[0] = az;
+    Array[0] = (az / 16384.0f) * 100;;
   }
 }
 
@@ -199,6 +202,14 @@ void MotorCmd(int angle) {
       myservo.write(125);
       break;
   }
+}
+//////////////////////計算中位數//////////////////////
+void CalculateByMedian(float SortArray[], int StartValue, int* Send) {
+
+  float Median, total;
+  Median = SortArray[2];
+  float CalculateValue = abs(StartValue - Median);
+  *Send = CalculateValue;
 }
 
 //////////////////////角度計算//////////////////////
@@ -266,16 +277,14 @@ void BlueAndRed() {
 
 //////////////////////藍芽傳值涵式//////////////////////
 void BluetoothSendData() {
-  int AccX=(ay/16384.0f)*100;
-  int AccZ=(az/16384.0f)*100;
   
-    Serial.write(85);
-    Serial.write(AccX);
-    Serial.write(AccZ);
-    Serial.write(SendHall);
-    Serial.write(int(angle));
-    Serial.write(NowMode);
-  
+  Serial.write(85);
+  Serial.write(SendX);
+  Serial.write(MedienX);
+  Serial.write(SendHall);
+  Serial.write(int(angle));
+  Serial.write(NowMode);
+
   /*
     Serial.write(85);
     Serial.write(analogRead(XPin));
@@ -333,8 +342,9 @@ void SwitchOnOff() {
     VariancePulsByLoad(XSortArray, &SendX);
     VariancePulsByLoad(ZSortArray, &SendZ);
     VariancePulsByLoad(HallSortArray, &SendHall);
+    CalculateByMedian(XSortArray, XStartValue, &MedienX);
     Angletest();
-   // NowModeSwitch();
+    // NowModeSwitch();
     BluetoothSendData();
   } else {
     BlueAndRed();
