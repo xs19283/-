@@ -26,6 +26,7 @@ float HallSortArray[NUMBER];
 const int HallPin = A2;
 int HallStartValue = 0;
 int SendHall;
+int MedienHall;
 
 //////////////////////X軸相關變數及陣列//////////////////////
 float ZAxisArray [NUMBER];
@@ -97,10 +98,12 @@ void setup() {
 //////////////////////外部中斷涵式//////////////////////
 void InteHall() {
   CtrlInti = 1;
-  if (SendX > 1000) {
+  VariancePulsByLoad(XSortArray, &SendX);
+  VariancePulsByLoad(ZSortArray, &SendZ);
+  if (SendX > 80 & SendZ > 80) {
     MotorCmd(2);
     NowMode = 5;
-    delay(1000);
+    delay(2000);
   }
   CtrlInti = 0;
 }
@@ -280,7 +283,7 @@ void BlueAndRed() {
 
 //////////////////////藍芽傳值涵式//////////////////////
 void BluetoothSendData() {
-  
+
   Serial.write(85);
   Serial.write(SendX);
   Serial.write(MedienX);
@@ -299,11 +302,11 @@ void BluetoothSendData() {
 
 //////////////////////模式選擇//////////////////////
 void NowModeSwitch() {
-  if (SendZ > 500 && SendHall <= 4 && CtrlInti == 0) {
+  if (SendZ >= 90 && SendX >= 45 && CtrlInti == 0 && MedienHall <5) {
     MotorCmd(6);
     NowMode = 4;
     delay(1000);
-  } else if (angle > 43 && SendHall >= 5 && CtrlInti == 0) {
+  } else if (angle > 45 && SendHall >= 4 && CtrlInti == 0) {
     MotorCmd(2);
     NowMode = 3;
     delay(1000);
@@ -325,7 +328,7 @@ void NowModeSwitch() {
     MotorCmd(1);
     NowMode = 1;
     delay(2000);
-  } else if (SendX <= 1000 && CtrlInti == 0) {
+  } else if (SendX <= 10 && CtrlInti == 0 && SendZ <= 10) {
     MotorCmd(1);
     NowMode = 1;
     delay(500);
@@ -347,6 +350,7 @@ void SwitchOnOff() {
     VariancePulsByLoad(HallSortArray, &SendHall);
     CalculateByMedian(XSortArray, XStartValue, &MedienX);
     CalculateByMedian(ZSortArray, ZStartValue, &MedienZ);
+    CalculateByMedian(HallSortArray, HallStartValue, &MedienHall);
     Angletest();
     // NowModeSwitch();
     BluetoothSendData();
