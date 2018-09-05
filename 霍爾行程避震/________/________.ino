@@ -30,14 +30,16 @@ int SendHall;
 //////////////////////X軸相關變數及陣列//////////////////////
 float ZAxisArray [NUMBER];
 float ZSortArray [NUMBER];
+int XStartValue = 0;
 int SendZ;
+int MedienX;
 
 //////////////////////Z軸相關變數及陣列//////////////////////
 float XAxisArray[NUMBER];
 float XSortArray[NUMBER];
-int XStartValue = 0;
+int ZStartValue = 0;
 int SendX;
-int MedienX;
+int MedienZ;
 
 //////////////////////姿態感測收值變數//////////////////////
 int16_t ax, ay, az, gx, gy, gz;
@@ -125,6 +127,7 @@ void PutValueArray(float Array[], String Axis) {
       mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
       Array[i] = (az / 16384.0f) * 100;;
     }
+    ZStartValue = (az / 16384.0f) * 100;
   }
 }
 
@@ -281,9 +284,9 @@ void BluetoothSendData() {
   Serial.write(85);
   Serial.write(SendX);
   Serial.write(MedienX);
-  Serial.write(SendHall);
+  Serial.write(SendZ);
   Serial.write(int(angle));
-  Serial.write(NowMode);
+  Serial.write(MedienZ);
 
   /*
     Serial.write(85);
@@ -343,6 +346,7 @@ void SwitchOnOff() {
     VariancePulsByLoad(ZSortArray, &SendZ);
     VariancePulsByLoad(HallSortArray, &SendHall);
     CalculateByMedian(XSortArray, XStartValue, &MedienX);
+    CalculateByMedian(ZSortArray, ZStartValue, &MedienZ);
     Angletest();
     // NowModeSwitch();
     BluetoothSendData();
