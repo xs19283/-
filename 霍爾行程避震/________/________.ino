@@ -302,7 +302,7 @@ void BluetoothSendData() {
 
 //////////////////////模式選擇//////////////////////
 void NowModeSwitch() {
-  if (SendZ >= 90 && SendX >= 45 && CtrlInti == 0 && MedienHall <5) {
+  if (SendZ >= 90 && SendX >= 45 && CtrlInti == 0 && MedienHall < 5) {
     MotorCmd(6);
     NowMode = 4;
     delay(1000);
@@ -311,24 +311,25 @@ void NowModeSwitch() {
     NowMode = 3;
     delay(1000);
   } else if (SendZ > 400 && SendHall > 10 && CtrlInti == 0) {
-    if (SendHall > 10) {
-      MotorCmd(3);
+    if (SendHall > 50) {
+      MotorCmd(5);
       NowMode = 2;
       delay(500);
     } else if (SendHall > 30) {
       MotorCmd(4);
       NowMode = 2;
       delay(500);
-    } else if (SendHall > 50) {
-      MotorCmd(5);
+    } else if (SendHall > 10) {
+      MotorCmd(3);
       NowMode = 2;
       delay(500);
     }
-  } else if (SendX > 1000 && CtrlInti == 0) {
+  }  else if (SendX <= 5 && SendZ <= 5) {
+    CtrlInti = 1;
     MotorCmd(1);
     NowMode = 1;
-    delay(2000);
-  } else if (SendX <= 10 && CtrlInti == 0 && SendZ <= 10) {
+    delay(500);
+  } else if (SendX >= 5 && SendZ >= 5 && CtrlInti == 1) {
     MotorCmd(1);
     NowMode = 1;
     delay(500);
