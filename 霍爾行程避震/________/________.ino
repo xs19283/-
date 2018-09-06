@@ -1,5 +1,5 @@
 //////////////////////庫//////////////////////
-#include<Servo.h>
+#include <Servo.h>
 #include "I2Cdev.h"
 #include "MPU6050.h"
 
@@ -8,7 +8,8 @@ Servo myservo;
 MPU6050 mpu;
 
 //////////////////////五大模式變數//////////////////////
-int NowMode;
+volatile int NowMode;
+int CtrlGoStop;
 
 //////////////////////開關跟按鈕、LED、馬達變數//////////////////////
 #define NUMBER 5
@@ -42,6 +43,12 @@ int ZStartValue = 0;
 int SendX;
 int MedienZ;
 
+//////////////////////Y軸相關變數及陣列//////////////////////
+float YAxisArray[NUMBER];
+float YSortArray[NUMBER];
+int YStartValue = 0;
+int SendY;
+
 //////////////////////姿態感測收值變數//////////////////////
 int16_t ax, ay, az, gx, gy, gz;
 
@@ -67,6 +74,8 @@ float dt = timeChange * 0.001; //注意：dt的取值为滤波器采样时间
 
 //////////////////////外部中斷控制變數//////////////////////
 int CtrlInti = 0;
+int IntBreak = 2;
+int HILO;
 
 void setup() {
   Serial.begin(115200);
@@ -84,12 +93,14 @@ void setup() {
   PutValueArray(HallArray, HallStartValue, HallPin);
   PutValueArray(XAxisArray, "X");
   PutValueArray(ZAxisArray, "Z");
+  PutValueArray(YAxisArray, "Y");
   //////////////////////藍芽初始化//////////////////////
   pinMode(9, OUTPUT);
   digitalWrite(9, HIGH);
   delay(1000);
   //////////////////////外部中斷設定//////////////////////
-  attachInterrupt(0, InteHall, HIGH); //assign int0
+  //attachInterrupt(0, InteHall, HIGH); //assign int0
+  pinMode(IntBreak, INPUT);
   //////////////////////所有設定已完成 LED亮起//////////////////////
   pinMode(LED, OUTPUT);
   digitalWrite(LED, HIGH);
@@ -98,13 +109,14 @@ void setup() {
 //////////////////////外部中斷涵式//////////////////////
 void InteHall() {
   CtrlInti = 1;
+  digitalWrite(LED, LOW);
   VariancePulsByLoad(XSortArray, &SendX);
   VariancePulsByLoad(ZSortArray, &SendZ);
-  if (SendX > 80 & SendZ > 80) {
+  if (SendX > 20 & SendZ > 20) {
     MotorCmd(2);
     NowMode = 5;
-    delay(2000);
   }
+
   CtrlInti = 0;
 }
 
@@ -132,6 +144,13 @@ void PutValueArray(float Array[], String Axis) {
     }
     ZStartValue = (az / 16384.0f) * 100;
   }
+  if (Axis == "Y") {
+    for (int i = 0; i < NUMBER; i++) {
+      mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+      Array[i] = (ax / 16384.0f) * 100;;
+    }
+    ZStartValue = (ax / 16384.0f) * 100;
+  }
 }
 
 //////////////////////霍爾陣列放值進第一元素//////////////////////
@@ -154,6 +173,10 @@ void ShiftRightArray(float Array[], String Axis) {
   if (Axis == "Z") {
     mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
     Array[0] = (az / 16384.0f) * 100;;
+  }
+  if (Axis == "Y") {
+    mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+    Array[0] = (ay / 16384.0f) * 100;;
   }
 }
 
@@ -286,10 +309,11 @@ void BluetoothSendData() {
 
   Serial.write(85);
   Serial.write(SendX);
-  Serial.write(MedienX);
   Serial.write(SendZ);
-  Serial.write(int(angle));
-  Serial.write(MedienZ);
+  Serial.write(SendHall);
+  Serial.write(SendY);
+  //Serial.write(int(angle));
+  Serial.write(NowMode);
 
   /*
     Serial.write(85);
@@ -302,37 +326,45 @@ void BluetoothSendData() {
 
 //////////////////////模式選擇//////////////////////
 void NowModeSwitch() {
-  if (SendZ >= 90 && SendX >= 45 && CtrlInti == 0 && MedienHall < 5) {
+  HILO = digitalRead(IntBreak);
+  if (HILO == HIGH) {
+    InteHall();
+  } else  if (SendZ >= 40 && SendX >= 30 && CtrlInti == 0 && SendHall < 10 && CtrlGoStop == 0) {
+    digitalWrite(LED, HIGH);
     MotorCmd(6);
     NowMode = 4;
     delay(1000);
-  } else if (angle > 45 && SendHall >= 4 && CtrlInti == 0) {
+  } else if (angle > 55 && SendHall != 0 && CtrlInti == 0 && CtrlGoStop == 0) {
+    digitalWrite(LED, HIGH);
     MotorCmd(2);
     NowMode = 3;
     delay(1000);
-  } else if (SendZ > 400 && SendHall > 10 && CtrlInti == 0) {
-    if (SendHall > 50) {
+  } else if (SendZ > 10 && SendHall > 10 && CtrlInti == 0 && CtrlGoStop == 0) {
+    digitalWrite(LED, HIGH);
+    if (SendHall > 100) {
       MotorCmd(5);
       NowMode = 2;
-      delay(500);
-    } else if (SendHall > 30) {
+      delay(1000);
+    } else if (SendHall > 50) {
       MotorCmd(4);
       NowMode = 2;
-      delay(500);
+      delay(1000);
     } else if (SendHall > 10) {
       MotorCmd(3);
       NowMode = 2;
-      delay(500);
+      delay(1000);
     }
-  }  else if (SendX <= 5 && SendZ <= 5) {
-    CtrlInti = 1;
+  } else if (SendX <= 3 && SendZ <= 3) {
+    digitalWrite(LED, HIGH);
+    CtrlGoStop = 1;
     MotorCmd(1);
     NowMode = 1;
-    delay(500);
-  } else if (SendX >= 5 && SendZ >= 5 && CtrlInti == 1) {
+    VariancePulsByLoad(YSortArray, &SendY);
+  } else if (SendY >= 1 && SendX >= 2 && SendZ >= 1  && CtrlGoStop == 1) {
+    digitalWrite(LED, HIGH);
     MotorCmd(1);
-    NowMode = 1;
-    delay(500);
+    NowMode = 0;
+    CtrlGoStop = 0;
   }
 }
 
@@ -342,19 +374,22 @@ void SwitchOnOff() {
   if (OnOff == HIGH) {
     ShiftRightArray(XAxisArray, "X");
     ShiftRightArray(ZAxisArray, "Z");
+    ShiftRightArray(YAxisArray, "Y");
     ShiftRightArray(HallArray, HallPin);
     SortByArray(XSortArray, XAxisArray);
     SortByArray(ZSortArray, ZAxisArray);
+    SortByArray(YSortArray, YAxisArray);
     SortByArray(HallSortArray, HallArray);
     VariancePulsByLoad(XSortArray, &SendX);
     VariancePulsByLoad(ZSortArray, &SendZ);
     VariancePulsByLoad(HallSortArray, &SendHall);
-    CalculateByMedian(XSortArray, XStartValue, &MedienX);
-    CalculateByMedian(ZSortArray, ZStartValue, &MedienZ);
-    CalculateByMedian(HallSortArray, HallStartValue, &MedienHall);
+    //CalculateByMedian(XSortArray, XStartValue, &MedienX);
+    //CalculateByMedian(ZSortArray, ZStartValue, &MedienZ);
+    //CalculateByMedian(HallSortArray, HallStartValue, &MedienHall);
     Angletest();
-    // NowModeSwitch();
+    NowModeSwitch();
     BluetoothSendData();
+    delay(100);
   } else {
     BlueAndRed();
   }
