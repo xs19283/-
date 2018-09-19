@@ -27,29 +27,25 @@ int HallStartValue = 0;
 int SendHx711;
 int MedienHx711;
 
-//////////////////////X軸相關變數及陣列//////////////////////
+//////////////////////Z軸相關變數及陣列//////////////////////
 float ZAxisArray [NUMBER];
 float ZSortArray [NUMBER];
-int XStartValue = 0;
+int ZStartValue = 0;
 int SendZ;
-int MedienX;
+int MedienZ;
+const int ZPin = A3;
 
-//////////////////////Z軸相關變數及陣列//////////////////////
+//////////////////////X軸相關變數及陣列//////////////////////
 float XAxisArray[NUMBER];
 float XSortArray[NUMBER];
-int ZStartValue = 0;
+int XStartValue = 0;
 int SendX;
-int MedienZ;
-
-//////////////////////Y軸相關變數及陣列//////////////////////
-float YAxisArray[NUMBER];
-float YSortArray[NUMBER];
-int YStartValue = 0;
-int SendY;
+int MedienX;
+const int XPin = A2;
 
 //////////////////////外部中斷控制變數//////////////////////
 int CtrlInti = 0;
-int IntBreak = 2;
+int IntBreak = 3;
 int HILO;
 
 void setup() {
@@ -64,10 +60,12 @@ void setup() {
   // HX711.DOUT  - pin #A1
   // HX711.PD_SCK - pin #A0
   scale.begin(A1, A0);
-  scale.set_scale(2280.f);                      // this value is obtained by calibrating the scale with known weights; see the README for details
+  scale.set_scale(3780.f);                      // this value is obtained by calibrating the scale with known weights; see the README for details
   scale.tare();               // reset the scale to 0
   //////////////////////在程式初始時先放五個 Hall&X&Z 元素進陣列//////////////////////
   PutValueArray(Hx711Array);
+  PutValueArray(XAxisArray, XPin, &XStartValue, "X");
+  PutValueArray(ZAxisArray, ZPin, &ZStartValue, "Z");
   //////////////////////藍芽初始化//////////////////////
   /*pinMode(9, OUTPUT);
     digitalWrite(9, HIGH);
@@ -95,9 +93,24 @@ void InteHall() {
 //////////////////////Hx711陣列初始化完放五個元素//////////////////////
 void PutValueArray(float Array[]) {
   for (int i = 0; i < NUMBER; i++) {
-    Array[i] = abs(scale.get_units());
+    Array[i] = scale.get_units();
   }
-  HallStartValue = abs(scale.get_units());
+  HallStartValue = scale.get_units();
+}
+
+void PutValueArray(float Array[], int Pin, int* StartValue, String Axis) {
+  if (Axis == "X") {
+    for (int i = 0; i < NUMBER; i++) {
+      Array[i] = ((analogRead(Pin) - 331.5) / 65 * 9.8);
+    }
+    *StartValue = ((analogRead(Pin) - 331.5) / 65 * 9.8);
+  }
+  if (Axis == "Z") {
+    for (int i = 0; i < NUMBER; i++) {
+      Array[i] = ((analogRead(Pin) - 340) / 68 * 9.8);
+    }
+    *StartValue = ((analogRead(Pin) - 340) / 68 * 9.8);
+  }
 }
 
 //////////////////////Hx711陣列放值進第一元素//////////////////////
@@ -105,9 +118,23 @@ void ShiftRightArray(float Array[]) {
   for (int i = NUMBER - 1; i > 0; i--) {
     Array[i] = Array[i - 1];
   }
-  Array[0] =  abs(scale.get_units());
+  Array[0] =  scale.get_units();
 }
 
+void ShiftRightArray(float Array[], String Axis, int Pin) {
+  if (Axis == "Z") {
+    for (int i = NUMBER - 1; i > 0; i--) {
+      Array[i] = Array[i - 1];
+    }
+    Array[0] = ((analogRead(Pin) - 340) / 68 * 9.8);
+  }
+  if (Axis == "X") {
+    for (int i = NUMBER - 1; i > 0; i--) {
+      Array[i] = Array[i - 1];
+    }
+    Array[0] = ((analogRead(Pin) - 331.5) / 65 * 9.8);
+  }
+}
 
 //////////////////////陣列排序//////////////////////
 void SortByArray(float SortArray[], float Array[]) {
@@ -191,6 +218,11 @@ void BlueAndRed() {
 void BluetoothSendData() {
 
   //Serial.println(85);
+  Serial.print("X  ");
+  Serial.println(SendX);
+  Serial.print("Z  ");
+  Serial.println(SendZ);
+  Serial.print("Hx711  ");
   Serial.println(SendHx711);
 
   /*
@@ -205,21 +237,33 @@ void BluetoothSendData() {
 //////////////////////模式選擇//////////////////////
 void NowModeSwitch() {
   HILO = digitalRead(IntBreak);
-   if(SendHx711 > 10 ) {
+
+  if (HILO == LOW) {
+    InteHall();
+  } else if (SendZ >= 20  && CtrlInti == 0) {
     digitalWrite(LED, HIGH);
-    if (SendHx711 > 40) {
+    MotorCmd(6);
+    NowMode = 4;
+  } else if (SendX > 9 && CtrlInti == 0) {
+    digitalWrite(LED, HIGH);
+    MotorCmd(2);
+    NowMode = 3;
+  } else if (SendHx711 > 15 && CtrlInti == 0) {
+    digitalWrite(LED, HIGH);
+    if (SendHx711 > 50) {
       MotorCmd(5);
       NowMode = 2;
-      delay(1000);
     } else if (SendHx711 > 25) {
       MotorCmd(4);
       NowMode = 2;
-      delay(1000);
-    } else if (SendHx711 > 15) {
+    } else if (SendHx711 > 10) {
       MotorCmd(3);
       NowMode = 2;
-      delay(1000);
     }
+  } else if (SendZ <= 10) {
+    digitalWrite(LED, HIGH);
+    MotorCmd(1);
+    NowMode = 1;
   }
 }
 
@@ -227,14 +271,19 @@ void NowModeSwitch() {
 void SwitchOnOff() {
   OnOff = digitalRead(SW);
   if (OnOff == HIGH) {
+    SendX = (((float)analogRead(XPin) - 331.5) / 65 * 9.8);
+    SendZ = (((float)analogRead(ZPin) - 340) / 68 * 9.8);
     ShiftRightArray(Hx711Array);
+    //ShiftRightArray(ZAxisArray, "Z", ZPin);
+    //ShiftRightArray(XAxisArray, "X", XPin);
     SortByArray(Hx711SortArray, Hx711Array);
+    //SortByArray(ZSortArray, ZAxisArray);
+    //SortByArray(XSortArray, XAxisArray);
     VariancePulsByLoad(Hx711SortArray, &SendHx711);
     //CalculateByMedian(XSortArray, XStartValue, &MedienX);
     //CalculateByMedian(ZSortArray, ZStartValue, &MedienZ);
     NowModeSwitch();
     BluetoothSendData();
-    delay(100);
   } else {
     BlueAndRed();
   }
