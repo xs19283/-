@@ -9,6 +9,7 @@ HX711 scale;
 //////////////////////五大模式變數//////////////////////
 volatile int NowMode;
 int CtrlGoStop;
+int timer = 0;
 
 //////////////////////開關跟按鈕、LED、馬達變數//////////////////////
 #define NUMBER 5
@@ -20,12 +21,15 @@ int red, bule;      //按鈕變數
 int OnOff;          //監控是否自動手動變數
 int Seg = 1;        //為手動調整伺服馬達變數
 
-//////////////////////霍爾相關變數及陣列//////////////////////
+//////////////////////HX711相關變數及陣列//////////////////////
 float Hx711Array[NUMBER];
 float Hx711SortArray[NUMBER];
 int HallStartValue = 0;
 int SendHx711;
 int MedienHx711;
+
+float Hx711newArray[NUMBER];
+int avgHx711;
 
 //////////////////////Z軸相關變數及陣列//////////////////////
 float ZAxisArray [NUMBER];
@@ -82,11 +86,11 @@ void setup() {
 void InteHall() {
   CtrlInti = 1;
   digitalWrite(LED, LOW);
-  if (SendX > 20 & SendZ > 20) {
+  if (SendX >= 5) {
     MotorCmd(2);
     NowMode = 5;
+    delay(1000);
   }
-
   CtrlInti = 0;
 }
 
@@ -101,15 +105,15 @@ void PutValueArray(float Array[]) {
 void PutValueArray(float Array[], int Pin, int* StartValue, String Axis) {
   if (Axis == "X") {
     for (int i = 0; i < NUMBER; i++) {
-      Array[i] = ((analogRead(Pin) - 331.5) / 65 * 9.8);
+      Array[i] = (((float)analogRead(Pin) - 331.5) / 65 * 9.8);
     }
-    *StartValue = ((analogRead(Pin) - 331.5) / 65 * 9.8);
+    *StartValue = (((float)analogRead(Pin) - 331.5) / 65 * 9.8);
   }
   if (Axis == "Z") {
     for (int i = 0; i < NUMBER; i++) {
-      Array[i] = ((analogRead(Pin) - 340) / 68 * 9.8);
+      Array[i] = (((float)analogRead(Pin) - 340) / 68 * 9.8);
     }
-    *StartValue = ((analogRead(Pin) - 340) / 68 * 9.8);
+    *StartValue = (((float)analogRead(Pin) - 340) / 68 * 9.8);
   }
 }
 
@@ -126,13 +130,13 @@ void ShiftRightArray(float Array[], String Axis, int Pin) {
     for (int i = NUMBER - 1; i > 0; i--) {
       Array[i] = Array[i - 1];
     }
-    Array[0] = ((analogRead(Pin) - 340) / 68 * 9.8);
+    Array[0] = (((float)analogRead(Pin) - 340) / 68 * 9.8);
   }
   if (Axis == "X") {
     for (int i = NUMBER - 1; i > 0; i--) {
       Array[i] = Array[i - 1];
     }
-    Array[0] = ((analogRead(Pin) - 331.5) / 65 * 9.8);
+    Array[0] = (((float)analogRead(Pin) - 331.5) / 65 * 9.8);
   }
 }
 
@@ -214,53 +218,73 @@ void BlueAndRed() {
   }
 }
 
+//////////////////////平均值//////////////////////
+void AvgCaculute(float Array[],int* avgHx711){
+  int Sum=0;
+  for (int i = NUMBER - 1; i > 0; i--) {
+    Array[i] = Array[i - 1];
+  }
+  Array[0] = SendHx711;
+  for(int i = 0; i<5;i++){
+    Sum+=Array[i];
+  }
+  *avgHx711 = Sum/5;
+}
+
 //////////////////////藍芽傳值涵式//////////////////////
 void BluetoothSendData() {
-
+/*
   //Serial.println(85);
   Serial.print("X  ");
   Serial.println(SendX);
   Serial.print("Z  ");
   Serial.println(SendZ);
   Serial.print("Hx711  ");
-  Serial.println(SendHx711);
-
-  /*
+  Serial.println(avgHx711);
+*/
+  
     Serial.write(85);
-    Serial.write(analogRead(XPin));
-    Serial.write(analogRead(ZPin));
-    Serial.write(analogRead(HallPin));
+    Serial.write(analogRead(SendX));
+    Serial.write(analogRead(SendZ));
+    Serial.write(analogRead(avgHx711));
     Serial.write(1);
-  */
+    Serial.write(10);
+  
 }
 
 //////////////////////模式選擇//////////////////////
 void NowModeSwitch() {
   HILO = digitalRead(IntBreak);
 
+
   if (HILO == LOW) {
     InteHall();
-  } else if (SendZ >= 20  && CtrlInti == 0) {
+  } else if (SendZ >= 13  && CtrlInti == 0 && SendHx711 <=5) {
     digitalWrite(LED, HIGH);
     MotorCmd(6);
     NowMode = 4;
-  } else if (SendX > 9 && CtrlInti == 0) {
+    delay(1000);
+  } else if (SendX > 6 && CtrlInti == 0) {
     digitalWrite(LED, HIGH);
     MotorCmd(2);
     NowMode = 3;
-  } else if (SendHx711 > 15 && CtrlInti == 0) {
+  } else if (avgHx711 > 5 && CtrlInti == 0) {
     digitalWrite(LED, HIGH);
-    if (SendHx711 > 50) {
+    if (avgHx711 > 28
+    ) {
       MotorCmd(5);
       NowMode = 2;
-    } else if (SendHx711 > 25) {
+      delay(500);
+    } else if (avgHx711 > 16) {
       MotorCmd(4);
       NowMode = 2;
-    } else if (SendHx711 > 10) {
+      delay(500);
+    } else if (avgHx711 > 5) {
       MotorCmd(3);
       NowMode = 2;
+      delay(500);
     }
-  } else if (SendZ <= 10) {
+  } else if (SendHx711 <= 2 && CtrlInti == 0) {
     digitalWrite(LED, HIGH);
     MotorCmd(1);
     NowMode = 1;
@@ -271,19 +295,27 @@ void NowModeSwitch() {
 void SwitchOnOff() {
   OnOff = digitalRead(SW);
   if (OnOff == HIGH) {
-    SendX = (((float)analogRead(XPin) - 331.5) / 65 * 9.8);
-    SendZ = (((float)analogRead(ZPin) - 340) / 68 * 9.8);
+    //SendX = (((float)analogRead(XPin) - 331.5) / 65 * 9.8);
+    //SendZ = (((float)analogRead(ZPin) - 340) / 68 * 9.8);
     ShiftRightArray(Hx711Array);
-    //ShiftRightArray(ZAxisArray, "Z", ZPin);
-    //ShiftRightArray(XAxisArray, "X", XPin);
+    ShiftRightArray(ZAxisArray, "Z", ZPin);
+    ShiftRightArray(XAxisArray, "X", XPin);
     SortByArray(Hx711SortArray, Hx711Array);
-    //SortByArray(ZSortArray, ZAxisArray);
-    //SortByArray(XSortArray, XAxisArray);
+    SortByArray(ZSortArray, ZAxisArray);
+    SortByArray(XSortArray, XAxisArray);
+    VariancePulsByLoad(Hx711SortArray, &SendHx711);
+    VariancePulsByLoad(Hx711SortArray, &SendHx711);
     VariancePulsByLoad(Hx711SortArray, &SendHx711);
     //CalculateByMedian(XSortArray, XStartValue, &MedienX);
     //CalculateByMedian(ZSortArray, ZStartValue, &MedienZ);
-    NowModeSwitch();
-    BluetoothSendData();
+    AvgCaculute(Hx711newArray, &avgHx711);
+    timer+=1;
+    if (timer > 10) {
+      SendZ = ZSortArray[2];
+      SendX = XSortArray[2];
+      NowModeSwitch();
+      BluetoothSendData();
+    }
   } else {
     BlueAndRed();
   }
