@@ -86,7 +86,7 @@ void setup() {
 void InteHall() {
   CtrlInti = 1;
   digitalWrite(LED, LOW);
-  if (SendX >= 5) {
+  if (SendX >= 1) {
     MotorCmd(2);
     NowMode = 5;
     delay(1000);
@@ -219,37 +219,37 @@ void BlueAndRed() {
 }
 
 //////////////////////平均值//////////////////////
-void AvgCaculute(float Array[],int* avgHx711){
-  int Sum=0;
+void AvgCaculute(float Array[], int* avgHx711) {
+  int Sum = 0;
   for (int i = NUMBER - 1; i > 0; i--) {
     Array[i] = Array[i - 1];
   }
   Array[0] = SendHx711;
-  for(int i = 0; i<5;i++){
-    Sum+=Array[i];
+  for (int i = 0; i < 5; i++) {
+    Sum += Array[i];
   }
-  *avgHx711 = Sum/5;
+  *avgHx711 = Sum / 5;
 }
 
 //////////////////////藍芽傳值涵式//////////////////////
 void BluetoothSendData() {
-/*
-  //Serial.println(85);
-  Serial.print("X  ");
-  Serial.println(SendX);
-  Serial.print("Z  ");
-  Serial.println(SendZ);
-  Serial.print("Hx711  ");
-  Serial.println(avgHx711);
-*/
-  
-    Serial.write(85);
-    Serial.write(analogRead(SendX));
-    Serial.write(analogRead(SendZ));
-    Serial.write(analogRead(avgHx711));
-    Serial.write(1);
-    Serial.write(10);
-  
+  /*
+    //Serial.println(85);
+    Serial.print("X  ");
+    Serial.println(SendX);
+    Serial.print("Z  ");
+    Serial.println(SendZ);
+    Serial.print("Hx711  ");
+    Serial.println(avgHx711);
+  */
+
+  Serial.write(85);
+  Serial.write(analogRead(SendX));
+  Serial.write(analogRead(SendZ));
+  Serial.write(analogRead(avgHx711));
+  Serial.write(1);
+  Serial.write(10);
+
 }
 
 //////////////////////模式選擇//////////////////////
@@ -259,30 +259,29 @@ void NowModeSwitch() {
 
   if (HILO == LOW) {
     InteHall();
-  } else if (SendZ >= 13  && CtrlInti == 0 && SendHx711 <=5) {
+  } else if (SendZ < 6  && CtrlInti == 0 && SendHx711 <= 2) {
     digitalWrite(LED, HIGH);
     MotorCmd(6);
     NowMode = 4;
     delay(1000);
-  } else if (SendX > 6 && CtrlInti == 0) {
+  } else if (SendX >= 6 && CtrlInti == 0) {
     digitalWrite(LED, HIGH);
     MotorCmd(2);
     NowMode = 3;
   } else if (avgHx711 > 5 && CtrlInti == 0) {
     digitalWrite(LED, HIGH);
-    if (avgHx711 > 28
-    ) {
+    if (avgHx711 > 25 ) {
       MotorCmd(5);
       NowMode = 2;
-      delay(500);
-    } else if (avgHx711 > 16) {
+      delay(400);
+    /*} else if (avgHx711 > 15) {
       MotorCmd(4);
       NowMode = 2;
-      delay(500);
+      delay(400);*/
     } else if (avgHx711 > 5) {
       MotorCmd(3);
       NowMode = 2;
-      delay(500);
+      delay(400);
     }
   } else if (SendHx711 <= 2 && CtrlInti == 0) {
     digitalWrite(LED, HIGH);
@@ -309,7 +308,7 @@ void SwitchOnOff() {
     //CalculateByMedian(XSortArray, XStartValue, &MedienX);
     //CalculateByMedian(ZSortArray, ZStartValue, &MedienZ);
     AvgCaculute(Hx711newArray, &avgHx711);
-    timer+=1;
+    timer += 1;
     if (timer > 10) {
       SendZ = ZSortArray[2];
       SendX = XSortArray[2];
