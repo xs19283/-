@@ -264,7 +264,7 @@ void NowModeSwitch() {
     MotorCmd(6);
     NowMode = 4;
     delay(1000);
-  } else if (SendX >= 6 && CtrlInti == 0) {
+  } else if (SendX >= 5 && CtrlInti == 0) {
     digitalWrite(LED, HIGH);
     MotorCmd(2);
     NowMode = 3;
