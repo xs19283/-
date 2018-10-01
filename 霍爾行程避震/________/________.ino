@@ -2,10 +2,12 @@
 #include <Servo.h>
 #include "I2Cdev.h"
 #include "MPU6050.h"
+#include <Timer.h>
 
 //////////////////////實例化物件//////////////////////
 Servo myservo;
 MPU6050 mpu;
+Timer ts;
 
 //////////////////////五大模式變數//////////////////////
 volatile int NowMode;
@@ -32,16 +34,16 @@ int MedienHall;
 //////////////////////X軸相關變數及陣列//////////////////////
 float ZAxisArray [NUMBER];
 float ZSortArray [NUMBER];
-int XStartValue = 0;
+int ZStartValue = 0;
 int SendZ;
-int MedienX;
+int MedienZ;
 
 //////////////////////Z軸相關變數及陣列//////////////////////
 float XAxisArray[NUMBER];
 float XSortArray[NUMBER];
-int ZStartValue = 0;
+int XStartValue = 0;
 int SendX;
-int MedienZ;
+int MedienX;
 
 //////////////////////Y軸相關變數及陣列//////////////////////
 float YAxisArray[NUMBER];
@@ -71,6 +73,7 @@ float R_angle = 0.5 , C_0 = 1;
 float q_bias, angle_err, PCt_0, PCt_1, E, K_0, K_1, t_0, t_1;
 float timeChange = 5; //滤波法采样时间间隔毫秒
 float dt = timeChange * 0.001; //注意：dt的取值为滤波器采样时间
+void Angletest();
 
 //////////////////////外部中斷控制變數//////////////////////
 int CtrlInti = 0;
@@ -104,6 +107,7 @@ void setup() {
   //////////////////////所有設定已完成 LED亮起//////////////////////
   pinMode(LED, OUTPUT);
   digitalWrite(LED, HIGH);
+  ts.every(100,Angletest); 
 }
 
 //////////////////////外部中斷涵式//////////////////////
@@ -244,6 +248,7 @@ void CalculateByMedian(float SortArray[], int StartValue, int* Send) {
 //////////////////////角度計算//////////////////////
 void Angletest()
 {
+  mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
   //平衡參數
   Angle = atan2(ay , az) * 57.3;           //角度計算公式
   Gyro_x = (gx - 128.1) / 131;              //角度轉換
@@ -339,7 +344,7 @@ void NowModeSwitch() {
     MotorCmd(2);
     NowMode = 3;
     delay(1000);
-  } else if (SendZ > 10 && SendHall > 10 && CtrlInti == 0 && CtrlGoStop == 0) {
+  } else if (SendZ > 10 && SendHall > 5 && CtrlInti == 0 && CtrlGoStop == 0) {
     digitalWrite(LED, HIGH);
     if (SendHall > 100) {
       MotorCmd(5);
@@ -386,10 +391,9 @@ void SwitchOnOff() {
     //CalculateByMedian(XSortArray, XStartValue, &MedienX);
     //CalculateByMedian(ZSortArray, ZStartValue, &MedienZ);
     //CalculateByMedian(HallSortArray, HallStartValue, &MedienHall);
-    Angletest();
-    NowModeSwitch();
+    //Angletest();
+    //NowModeSwitch();
     BluetoothSendData();
-    delay(100);
   } else {
     BlueAndRed();
   }
