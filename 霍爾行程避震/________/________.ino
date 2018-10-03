@@ -107,18 +107,17 @@ void setup() {
   //////////////////////所有設定已完成 LED亮起//////////////////////
   pinMode(LED, OUTPUT);
   digitalWrite(LED, HIGH);
-  ts.every(100,Angletest); 
+  //ts.every(500,Angletest); 
 }
 
 //////////////////////外部中斷涵式//////////////////////
 void InteHall() {
   CtrlInti = 1;
   digitalWrite(LED, LOW);
-  VariancePulsByLoad(XSortArray, &SendX);
-  VariancePulsByLoad(ZSortArray, &SendZ);
-  if (SendX > 20 & SendZ > 20) {
+  if (MedienX > 70) {
     MotorCmd(2);
     NowMode = 5;
+    delay(2000);
   }
 
   CtrlInti = 0;
@@ -313,63 +312,53 @@ void BlueAndRed() {
 void BluetoothSendData() {
 
   Serial.write(85);
-  Serial.write(SendX);
   Serial.write(SendZ);
+  Serial.write(MedienZ);
   Serial.write(SendHall);
-  Serial.write(SendY);
+  Serial.write(MedienX);
   //Serial.write(int(angle));
   Serial.write(NowMode);
 
-  /*
-    Serial.write(85);
-    Serial.write(analogRead(XPin));
-    Serial.write(analogRead(ZPin));
-    Serial.write(analogRead(HallPin));
-    Serial.write(1);
-  */
+/*
+    Serial.print("中位數 Z");
+    Serial.print(MedienZ);
+    Serial.print("標準差 Z");
+    Serial.print(SendZ);
+    Serial.print("霍爾 ");
+    Serial.println(SendHall);
+*/
 }
 
 //////////////////////模式選擇//////////////////////
 void NowModeSwitch() {
   HILO = digitalRead(IntBreak);
+  
   if (HILO == HIGH) {
     InteHall();
-  } else  if (SendZ >= 40 && SendX >= 30 && CtrlInti == 0 && SendHall < 10 && CtrlGoStop == 0) {
+  } else  if (SendZ >= 180 && CtrlInti == 0 && SendHall <= 2) {
     digitalWrite(LED, HIGH);
     MotorCmd(6);
     NowMode = 4;
-    delay(1000);
-  } else if (angle > 55 && SendHall != 0 && CtrlInti == 0 && CtrlGoStop == 0) {
+    delay(1500);
+  } else if (angle > 55 && CtrlInti == 0) {
     digitalWrite(LED, HIGH);
     MotorCmd(2);
     NowMode = 3;
-    delay(1000);
-  } else if (SendZ > 10 && SendHall > 5 && CtrlInti == 0 && CtrlGoStop == 0) {
+  } else if (SendZ > 100 && SendHall >= 1 && CtrlInti == 0) {
     digitalWrite(LED, HIGH);
-    if (SendHall > 100) {
+    if (SendHall > 20) {
       MotorCmd(5);
       NowMode = 2;
       delay(1000);
-    } else if (SendHall > 50) {
-      MotorCmd(4);
-      NowMode = 2;
-      delay(1000);
-    } else if (SendHall > 10) {
+    } else if (SendHall >= 1) {
       MotorCmd(3);
       NowMode = 2;
       delay(1000);
     }
   } else if (SendX <= 3 && SendZ <= 3) {
     digitalWrite(LED, HIGH);
-    CtrlGoStop = 1;
     MotorCmd(1);
     NowMode = 1;
-    VariancePulsByLoad(YSortArray, &SendY);
-  } else if (SendY >= 1 && SendX >= 2 && SendZ >= 1  && CtrlGoStop == 1) {
-    digitalWrite(LED, HIGH);
-    MotorCmd(1);
-    NowMode = 0;
-    CtrlGoStop = 0;
   }
 }
 
@@ -391,8 +380,10 @@ void SwitchOnOff() {
     //CalculateByMedian(XSortArray, XStartValue, &MedienX);
     //CalculateByMedian(ZSortArray, ZStartValue, &MedienZ);
     //CalculateByMedian(HallSortArray, HallStartValue, &MedienHall);
-    //Angletest();
-    //NowModeSwitch();
+    Angletest();
+    MedienX = XSortArray[2];
+    MedienZ = ZSortArray[2];
+    NowModeSwitch();
     BluetoothSendData();
   } else {
     BlueAndRed();
