@@ -2,12 +2,12 @@
 #include <Servo.h>
 #include "I2Cdev.h"
 #include "MPU6050.h"
-#include <Timer.h>
+#include "HX711.h"
 
-//////////////////////實例化物件//////////////////////
+//////////////////////建構物件//////////////////////
 Servo myservo;
 MPU6050 mpu;
-Timer ts;
+HX711 scale;
 
 //////////////////////五大模式變數//////////////////////
 volatile int NowMode;
@@ -22,6 +22,12 @@ int CtrlGoStop;
 int red, bule;      //按鈕變數
 int OnOff;          //監控是否自動手動變數
 int Seg = 1;        //為手動調整伺服馬達變數
+
+//////////////////////HX711相關變數及陣列//////////////////////
+float Hx711Array[NUMBER];
+float Hx711SortArray[NUMBER];
+int SendHx711;
+
 
 //////////////////////霍爾相關變數及陣列//////////////////////
 float HallArray[NUMBER];
@@ -92,11 +98,18 @@ void setup() {
   Wire.begin();
   mpu.initialize();
   delay(100);
+  //////////////////////設定應變規//////////////////////
+  // HX711.DOUT  - pin #A1
+  // HX711.PD_SCK - pin #A0
+  scale.begin(A1, A0);
+  scale.set_scale(3780.f);
+  scale.tare();
   //////////////////////在程式初始時先放五個 Hall&X&Z 元素進陣列//////////////////////
   PutValueArray(HallArray, HallStartValue, HallPin);
   PutValueArray(XAxisArray, "X");
   PutValueArray(ZAxisArray, "Z");
   PutValueArray(YAxisArray, "Y");
+  
   //////////////////////藍芽初始化//////////////////////
   pinMode(9, OUTPUT);
   digitalWrite(9, HIGH);
@@ -107,7 +120,6 @@ void setup() {
   //////////////////////所有設定已完成 LED亮起//////////////////////
   pinMode(LED, OUTPUT);
   digitalWrite(LED, HIGH);
-  //ts.every(500,Angletest); 
 }
 
 //////////////////////外部中斷涵式//////////////////////
@@ -129,6 +141,13 @@ void PutValueArray(float Array[], int StartValue, int Pin) {
     Array[i] = analogRead(Pin);
   }
   StartValue = analogRead(Pin);
+}
+
+void PutValueArray(float Array[]) {
+  for (int i = 0; i < NUMBER; i++) {
+    Array[i] = scale.get_units();
+  }
+  HallStartValue = scale.get_units();
 }
 
 //////////////////////姿態X, Z陣列初始化完放五個元素//////////////////////
@@ -162,6 +181,13 @@ void ShiftRightArray(float Array[], int Pin) {
     Array[i] = Array[i - 1];
   }
   Array[0] = analogRead(Pin);
+}
+
+void ShiftRightArray(float Array[]) {
+  for (int i = NUMBER - 1; i > 0; i--) {
+    Array[i] = Array[i - 1];
+  }
+  Array[0] =  scale.get_units();
 }
 
 //////////////////////X, Z陣列放值進第一元素//////////////////////
@@ -216,22 +242,22 @@ void VariancePulsByLoad (float SortArray[], int* SendData) {
 void MotorCmd(int angle) {
   switch (angle) {
     case 1:
-      myservo.write(0);
+      myservo.write(10);
       break;
     case 2:
-      myservo.write(25);
+      myservo.write(35);
       break;
     case 3:
-      myservo.write(50);
+      myservo.write(60);
       break;
     case 4:
       myservo.write(80);
       break;
     case 5:
-      myservo.write(100);
+      myservo.write(110);
       break;
     case 6:
-      myservo.write(125);
+      myservo.write(135);
       break;
   }
 }
@@ -310,7 +336,7 @@ void BlueAndRed() {
 
 //////////////////////藍芽傳值涵式//////////////////////
 void BluetoothSendData() {
-
+/*
   Serial.write(85);
   Serial.write(SendZ);
   Serial.write(MedienZ);
@@ -319,14 +345,16 @@ void BluetoothSendData() {
   //Serial.write(int(angle));
   Serial.write(NowMode);
 
-/*
+*/
     Serial.print("中位數 Z");
     Serial.print(MedienZ);
     Serial.print("標準差 Z");
     Serial.print(SendZ);
+    Serial.print("應變規  ");
+    Serial.print(SendHx711);
     Serial.print("霍爾 ");
     Serial.println(SendHall);
-*/
+
 }
 
 //////////////////////模式選擇//////////////////////
@@ -366,14 +394,17 @@ void NowModeSwitch() {
 void SwitchOnOff() {
   OnOff = digitalRead(SW);
   if (OnOff == HIGH) {
+    ShiftRightArray(Hx711Array);
     ShiftRightArray(XAxisArray, "X");
     ShiftRightArray(ZAxisArray, "Z");
-    ShiftRightArray(YAxisArray, "Y");
+    //ShiftRightArray(YAxisArray, "Y");
     ShiftRightArray(HallArray, HallPin);
+    SortByArray(Hx711SortArray, Hx711Array);
     SortByArray(XSortArray, XAxisArray);
     SortByArray(ZSortArray, ZAxisArray);
-    SortByArray(YSortArray, YAxisArray);
+    //SortByArray(YSortArray, YAxisArray);
     SortByArray(HallSortArray, HallArray);
+    VariancePulsByLoad(Hx711SortArray, &SendHx711);
     VariancePulsByLoad(XSortArray, &SendX);
     VariancePulsByLoad(ZSortArray, &SendZ);
     VariancePulsByLoad(HallSortArray, &SendHall);
@@ -383,7 +414,7 @@ void SwitchOnOff() {
     Angletest();
     MedienX = XSortArray[2];
     MedienZ = ZSortArray[2];
-    NowModeSwitch();
+    //NowModeSwitch();
     BluetoothSendData();
   } else {
     BlueAndRed();
