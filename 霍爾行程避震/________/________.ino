@@ -14,6 +14,11 @@ volatile int NowMode;
 int CtrlGoStop;
 
 //////////////////////開關跟按鈕、LED、馬達變數//////////////////////
+#define LED1 11
+#define LED2 10
+#define LED3 5
+#define LED4 4
+#define LED5 3
 #define NUMBER 5
 #define LED 7
 #define BUTTONRED 12
@@ -118,6 +123,11 @@ void setup() {
   //attachInterrupt(0, InteHall, HIGH); //assign int0
   pinMode(IntBreak, INPUT);
   //////////////////////所有設定已完成 LED亮起//////////////////////
+  pinMode(LED1, OUTPUT);
+  pinMode(LED2, OUTPUT);
+  pinMode(LED3, OUTPUT);
+  pinMode(LED4, OUTPUT);
+  pinMode(LED5, OUTPUT);
   pinMode(LED, OUTPUT);
   digitalWrite(LED, HIGH);
 }
@@ -238,29 +248,83 @@ void VariancePulsByLoad (float SortArray[], int* SendData) {
   *SendData = ToTal;
 }
 
+void LedControl(int mode){
+  switch(mode){
+    case 1:
+      digitalWrite(LED1, LOW);
+      digitalWrite(LED2, LOW);
+      digitalWrite(LED3, LOW);
+      digitalWrite(LED4, LOW);
+      digitalWrite(LED5, LOW);
+      break;
+    case 2:
+      digitalWrite(LED1, HIGH);
+      digitalWrite(LED2, LOW);
+      digitalWrite(LED3, LOW);
+      digitalWrite(LED4, LOW);
+      digitalWrite(LED5, LOW);
+      break;
+    case 3:
+      digitalWrite(LED1, HIGH);
+      digitalWrite(LED2, HIGH);
+      digitalWrite(LED3, LOW);
+      digitalWrite(LED4, LOW);
+      digitalWrite(LED5, LOW);
+      break;
+    case 4:
+      digitalWrite(LED1, HIGH);
+      digitalWrite(LED2, HIGH);
+      digitalWrite(LED3, HIGH);
+      digitalWrite(LED4, LOW);
+      digitalWrite(LED5, LOW);
+      break;
+    case 5:
+      digitalWrite(LED5, HIGH);
+      digitalWrite(LED5, HIGH);
+      digitalWrite(LED5, HIGH);
+      digitalWrite(LED5, HIGH);
+      digitalWrite(LED5, LOW);
+      break;
+    case 6:
+      digitalWrite(LED5, HIGH);
+      digitalWrite(LED5, HIGH);
+      digitalWrite(LED5, HIGH);
+      digitalWrite(LED5, HIGH);
+      digitalWrite(LED5, HIGH);
+      break;
+  }
+}
+
 //////////////////////馬達控制函式//////////////////////
 void MotorCmd(int angle) {
   switch (angle) {
     case 1:
       myservo.write(10);
+      LedControl(1);
       break;
     case 2:
       myservo.write(35);
+      LedControl(2);
       break;
     case 3:
       myservo.write(60);
+      LedControl(3);
       break;
     case 4:
       myservo.write(80);
+      LedControl(4);
       break;
     case 5:
       myservo.write(110);
+      LedControl(5);
       break;
     case 6:
       myservo.write(135);
+      LedControl(6);
       break;
   }
 }
+
 //////////////////////計算中位數//////////////////////
 void CalculateByMedian(float SortArray[], int StartValue, int* Send) {
 
@@ -336,25 +400,24 @@ void BlueAndRed() {
 
 //////////////////////藍芽傳值涵式//////////////////////
 void BluetoothSendData() {
-/*
+
   Serial.write(85);
+  Serial.write(SendX);
   Serial.write(SendZ);
-  Serial.write(MedienZ);
   Serial.write(SendHall);
-  Serial.write(MedienX);
-  //Serial.write(int(angle));
+  Serial.write(int(angle));
   Serial.write(NowMode);
 
-*/
-    Serial.print("中位數 Z");
-    Serial.print(MedienZ);
-    Serial.print("標準差 Z");
-    Serial.print(SendZ);
+/*
+    //Serial.print("中位數 Z");
+    //Serial.print(MedienZ);
+    //Serial.print("標準差 Z");
+    //Serial.print(SendZ);
     Serial.print("應變規  ");
     Serial.print(SendHx711);
     Serial.print("霍爾 ");
     Serial.println(SendHall);
-
+*/
 }
 
 //////////////////////模式選擇//////////////////////
@@ -363,7 +426,7 @@ void NowModeSwitch() {
   
   if (HILO == HIGH) {
     InteHall();
-  } else  if (SendZ >= 180 && CtrlInti == 0 && SendHall <= 2) {
+  } else  if (SendZ >= 120 && CtrlInti == 0 && SendHx711 <= 5) {
     digitalWrite(LED, HIGH);
     MotorCmd(6);
     NowMode = 4;
@@ -372,16 +435,20 @@ void NowModeSwitch() {
     digitalWrite(LED, HIGH);
     MotorCmd(2);
     NowMode = 3;
-  } else if (SendZ > 100 && SendHall >= 1 && CtrlInti == 0) {
+  } else if (SendHx711 > 5 && SendHall >= 1 && CtrlInti == 0) {
     digitalWrite(LED, HIGH);
     if (SendHall > 20) {
       MotorCmd(5);
       NowMode = 2;
-      delay(1000);
-    } else if (SendHall >= 1) {
+      delay(500);
+    } else if (SendHall >= 5) {
+      MotorCmd(4);
+      NowMode = 2;
+      delay(500);
+    }else if (SendHx711 >= 5) {
       MotorCmd(3);
       NowMode = 2;
-      delay(1000);
+      delay(500);
     }
   } else if (SendX <= 3 && SendZ <= 3) {
     digitalWrite(LED, HIGH);
@@ -414,7 +481,7 @@ void SwitchOnOff() {
     Angletest();
     MedienX = XSortArray[2];
     MedienZ = ZSortArray[2];
-    //NowModeSwitch();
+    NowModeSwitch();
     BluetoothSendData();
   } else {
     BlueAndRed();
