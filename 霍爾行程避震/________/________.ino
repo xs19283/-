@@ -32,7 +32,7 @@ int Seg = 1;        //為手動調整伺服馬達變數
 float Hx711Array[NUMBER];
 float Hx711SortArray[NUMBER];
 int SendHx711;
-
+int MedienHx711;
 
 //////////////////////霍爾相關變數及陣列//////////////////////
 float HallArray[NUMBER];
@@ -79,11 +79,11 @@ float angle, angle_dot;
 //////////////////////卡爾曼濾波變數//////////////////////
 float P[2][2] = {{ 1, 0 }, { 0, 1 }};
 float Pdot[4] = { 0, 0, 0, 0};
-float Q_angle = 0.001, Q_gyro = 0.005; //角度数据置信度,角速度数据置信度
+float Q_angle = 0.001, Q_gyro = 0.005; //角度數據基礎,角速度數據基礎
 float R_angle = 0.5 , C_0 = 1;
 float q_bias, angle_err, PCt_0, PCt_1, E, K_0, K_1, t_0, t_1;
-float timeChange = 5; //滤波法采样时间间隔毫秒
-float dt = timeChange * 0.001; //注意：dt的取值为滤波器采样时间
+float timeChange = 5; //濾波法採樣時間間隔毫秒
+float dt = timeChange * 0.001; //注意：dt的取值為濾波器採樣時間
 void Angletest();
 
 //////////////////////外部中斷控制變數//////////////////////
@@ -123,12 +123,12 @@ void setup() {
   //attachInterrupt(0, InteHall, HIGH); //assign int0
   pinMode(IntBreak, INPUT);
   //////////////////////所有設定已完成 LED亮起//////////////////////
-  pinMode(LED1, OUTPUT);
+  pinMode(LED1, OUTPUT);   //LED後帶數字為模式LED
   pinMode(LED2, OUTPUT);
   pinMode(LED3, OUTPUT);
   pinMode(LED4, OUTPUT);
   pinMode(LED5, OUTPUT);
-  pinMode(LED, OUTPUT);
+  pinMode(LED, OUTPUT);   //此為全部設定完成 亮LED燈
   digitalWrite(LED, HIGH);
 }
 
@@ -279,17 +279,17 @@ void LedControl(int mode){
       digitalWrite(LED5, LOW);
       break;
     case 5:
-      digitalWrite(LED5, HIGH);
-      digitalWrite(LED5, HIGH);
-      digitalWrite(LED5, HIGH);
-      digitalWrite(LED5, HIGH);
+      digitalWrite(LED1, HIGH);
+      digitalWrite(LED2, HIGH);
+      digitalWrite(LED3, HIGH);
+      digitalWrite(LED4, HIGH);
       digitalWrite(LED5, LOW);
       break;
     case 6:
-      digitalWrite(LED5, HIGH);
-      digitalWrite(LED5, HIGH);
-      digitalWrite(LED5, HIGH);
-      digitalWrite(LED5, HIGH);
+      digitalWrite(LED1, HIGH);
+      digitalWrite(LED2, HIGH);
+      digitalWrite(LED3, HIGH);
+      digitalWrite(LED4, HIGH);
       digitalWrite(LED5, HIGH);
       break;
   }
@@ -400,24 +400,24 @@ void BlueAndRed() {
 
 //////////////////////藍芽傳值涵式//////////////////////
 void BluetoothSendData() {
-
+/*
   Serial.write(85);
   Serial.write(SendX);
   Serial.write(SendZ);
   Serial.write(SendHall);
   Serial.write(int(angle));
   Serial.write(NowMode);
+*/
 
-/*
     //Serial.print("中位數 Z");
     //Serial.print(MedienZ);
     //Serial.print("標準差 Z");
     //Serial.print(SendZ);
     Serial.print("應變規  ");
-    Serial.print(SendHx711);
+    Serial.print(MedienHx711);
     Serial.print("霍爾 ");
     Serial.println(SendHall);
-*/
+
 }
 
 //////////////////////模式選擇//////////////////////
@@ -431,11 +431,11 @@ void NowModeSwitch() {
     MotorCmd(6);
     NowMode = 4;
     delay(1500);
-  } else if (angle > 55 && CtrlInti == 0) {
+  } else if (angle > 50 && CtrlInti == 0) {
     digitalWrite(LED, HIGH);
     MotorCmd(2);
     NowMode = 3;
-  } else if (SendHx711 > 5 && SendHall >= 1 && CtrlInti == 0) {
+  } else if (abs(MedienHx711) >= 30 && SendHall >= 1 && CtrlInti == 0) {
     digitalWrite(LED, HIGH);
     if (SendHall > 20) {
       MotorCmd(5);
@@ -461,6 +461,7 @@ void NowModeSwitch() {
 void SwitchOnOff() {
   OnOff = digitalRead(SW);
   if (OnOff == HIGH) {
+    Angletest();
     ShiftRightArray(Hx711Array);
     ShiftRightArray(XAxisArray, "X");
     ShiftRightArray(ZAxisArray, "Z");
@@ -479,8 +480,9 @@ void SwitchOnOff() {
     //CalculateByMedian(ZSortArray, ZStartValue, &MedienZ);
     //CalculateByMedian(HallSortArray, HallStartValue, &MedienHall);
     Angletest();
+    MedienHx711 = Hx711SortArray[2];
     MedienX = XSortArray[2];
-    MedienZ = ZSortArray[2];
+    //MedienZ = ZSortArray[2];
     NowModeSwitch();
     BluetoothSendData();
   } else {
