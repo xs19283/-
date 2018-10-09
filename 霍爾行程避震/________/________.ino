@@ -114,7 +114,7 @@ void setup() {
   PutValueArray(XAxisArray, "X");
   PutValueArray(ZAxisArray, "Z");
   PutValueArray(YAxisArray, "Y");
-  
+
   //////////////////////藍芽初始化//////////////////////
   pinMode(9, OUTPUT);
   digitalWrite(9, HIGH);
@@ -248,8 +248,8 @@ void VariancePulsByLoad (float SortArray[], int* SendData) {
   *SendData = ToTal;
 }
 
-void LedControl(int mode){
-  switch(mode){
+void LedControl(int mode) {
+  switch (mode) {
     case 1:
       digitalWrite(LED1, LOW);
       digitalWrite(LED2, LOW);
@@ -301,26 +301,32 @@ void MotorCmd(int angle) {
     case 1:
       myservo.write(10);
       LedControl(1);
+      Seg = 1;
       break;
     case 2:
       myservo.write(35);
       LedControl(2);
+      Seg = 2;
       break;
     case 3:
       myservo.write(60);
       LedControl(3);
+      Seg = 3;
       break;
     case 4:
       myservo.write(80);
       LedControl(4);
+      Seg = 4;
       break;
     case 5:
       myservo.write(110);
       LedControl(5);
+      Seg = 5;
       break;
     case 6:
       myservo.write(135);
       LedControl(6);
+      Seg = 6;
       break;
   }
 }
@@ -400,30 +406,30 @@ void BlueAndRed() {
 
 //////////////////////藍芽傳值涵式//////////////////////
 void BluetoothSendData() {
-/*
-  Serial.write(85);
-  Serial.write(SendX);
-  Serial.write(SendZ);
-  Serial.write(SendHall);
-  Serial.write(int(angle));
-  Serial.write(NowMode);
-*/
+  /*
+    Serial.write(85);
+    Serial.write(SendX);
+    Serial.write(SendZ);
+    Serial.write(SendHall);
+    Serial.write(int(angle));
+    Serial.write(NowMode);
+  */
 
-    //Serial.print("中位數 Z");
-    //Serial.print(MedienZ);
-    //Serial.print("標準差 Z");
-    //Serial.print(SendZ);
-    Serial.print("應變規  ");
-    Serial.print(MedienHx711);
-    Serial.print("霍爾 ");
-    Serial.println(SendHall);
+  //Serial.print("中位數 Z");
+  //Serial.print(MedienZ);
+  //Serial.print("標準差 Z");
+  //Serial.print(SendZ);
+  Serial.print("應變規  ");
+  Serial.print(MedienHx711);
+  Serial.print("霍爾 ");
+  Serial.println(SendHall);
 
 }
 
 //////////////////////模式選擇//////////////////////
 void NowModeSwitch() {
   HILO = digitalRead(IntBreak);
-  
+
   if (HILO == HIGH) {
     InteHall();
   } else  if (SendZ >= 120 && CtrlInti == 0 && SendHx711 <= 5) {
@@ -435,25 +441,122 @@ void NowModeSwitch() {
     digitalWrite(LED, HIGH);
     MotorCmd(2);
     NowMode = 3;
-  } else if (abs(MedienHx711) >= 30 && SendHall >= 1 && CtrlInti == 0) {
-    digitalWrite(LED, HIGH);
-    if (SendHall > 20) {
-      MotorCmd(5);
-      NowMode = 2;
-      delay(500);
-    } else if (SendHall >= 5) {
-      MotorCmd(4);
-      NowMode = 2;
-      delay(500);
-    }else if (SendHx711 >= 5) {
-      MotorCmd(3);
-      NowMode = 2;
-      delay(500);
-    }
   } else if (SendX <= 3 && SendZ <= 3) {
     digitalWrite(LED, HIGH);
     MotorCmd(1);
     NowMode = 1;
+  } else if (abs(MedienHx711) >= 30 && SendHall >= 1 && CtrlInti == 0) {
+    digitalWrite(LED, HIGH);
+    switch (Seg) {
+      case 1:
+        if (SendZ >= 50) {
+          MotorCmd(4);
+          NowMode = 2;
+          break;
+        } else if (SendZ >= 25) {
+          MotorCmd(3);
+          NowMode = 2;
+          break;
+        } else if (SendZ >= 5) {
+          MotorCmd(2);
+          NowMode = 2;
+          break;
+        } else if (SendZ >= 0 && SendZ < 5) {
+          MotorCmd(1);
+          NowMode = 2;
+          break;
+        }
+      case 2:
+        if (SendHall >= 12) {
+          MotorCmd(4);
+          NowMode = 2;
+          break;
+        } else if (SendHall >= 8) {
+          MotorCmd(3);
+          NowMode = 2;
+          break;
+        } else if (SendHall >= 4) {
+          MotorCmd(2);
+          NowMode = 2;
+          break;
+        } else if (SendHall >= 0) {
+          MotorCmd(1);
+          NowMode = 2;
+          break;
+        }
+      case 3:
+        if (SendHall >= 15) {
+          MotorCmd(5);
+          NowMode = 2;
+          break;
+        } else if (SendHall >= 10) {
+          MotorCmd(4);
+          NowMode = 2;
+          break;
+        } else if (SendHall >= 5) {
+          MotorCmd(3);
+          NowMode = 2;
+          break;
+        } else if (SendHall >= 0) {
+          MotorCmd(2);
+          NowMode = 2;
+          break;
+        }
+      case 4:
+        if (SendHall >= 18) {
+          MotorCmd(6);
+          NowMode = 2;
+          break;
+        } else if (SendHall >= 12) {
+          MotorCmd(5);
+          NowMode = 2;
+          break;
+        } else if (SendHall >= 6) {
+          MotorCmd(4);
+          NowMode = 2;
+          break;
+        } else if (SendHall >= 0) {
+          MotorCmd(3);
+          NowMode = 2;
+          break;
+        }
+      case 5:
+        if (SendHall >= 20) {
+          MotorCmd(6);
+          NowMode = 2;
+          break;
+        } else if (SendHall >= 14) {
+          MotorCmd(5);
+          NowMode = 2;
+          break;
+        } else if (SendHall >= 7) {
+          MotorCmd(4);
+          NowMode = 2;
+          break;
+        } else if (SendHall >= 0) {
+          MotorCmd(3);
+          NowMode = 2;
+          break;
+        }
+      case 6:
+        if (SendHall >= 20) {
+          MotorCmd(6);
+          NowMode = 2;
+          break;
+        } else if (SendHall >= 12) {
+          MotorCmd(5);
+          NowMode = 2;
+          break;
+        } else if (SendHall >= 5) {
+          MotorCmd(4);
+          NowMode = 2;
+          break;
+        } else if (SendHall >= 0) {
+          MotorCmd(3);
+          NowMode = 2;
+          break;
+        }
+    }
   }
 }
 
