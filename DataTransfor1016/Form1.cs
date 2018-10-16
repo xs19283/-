@@ -56,8 +56,6 @@ namespace DataTransfor
             xAxis.SetLeftCurve("A", new float[] { }, Color.Tomato);
             zAxis.SetLeftCurve("B", new float[] { }, Color.DodgerBlue);
             hallValue.SetLeftCurve("C", new float[] { }, Color.Orchid);
-            servoMode.SetLeftCurve("D", new float[] { }, Color.Brown);
-            elevationValue.SetLeftCurve("E", new float[] { }, Color.DarkBlue);
             DisView.SetLeftCurve("F", new float[] { }, Color.Black);
         }
 
@@ -99,33 +97,6 @@ namespace DataTransfor
             timer.Tick += (sender1, e1) =>
             {
                 hallValue.AddCurveData("C", ModBusData[2]);
-            };
-            timer.Start();
-        }
-
-        private void ElevationValueShow(object sender, EventArgs e)
-        {
-            Timer timer = new Timer
-            {
-                Interval = 1  //10毫秒更新一次
-            };
-            timer.Tick += (sender1, e1) =>
-            {
-                elevationValue.AddCurveData("E", ModBusData[3]);
-            };
-            timer.Start();
-        }
-
-        ////////模式顯示函式
-        private void ServoMode_Show(object sender, EventArgs e)
-        {
-            Timer timer = new Timer
-            {
-                Interval = 1  //10毫秒更新一次
-            };
-            timer.Tick += (sender1, e1) =>
-            {
-                servoMode.AddCurveData("D", ModBusData[4]);
             };
             timer.Start();
         }
@@ -194,9 +165,7 @@ namespace DataTransfor
         {
             XAxisValueShow(sender, e);
             ZAxisValueShow(sender, e);
-            ServoMode_Show(sender, e);
             HallValueShow(sender, e);
-            ElevationValueShow(sender, e);
             DisView_Show(sender, e);
             Mode_Show(sender, e);
             Elevation_Show(sender, e);

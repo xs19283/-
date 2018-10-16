@@ -37,9 +37,7 @@
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.startObservation = new HslCommunication.Controls.UserButton();
-            this.servoMode = new HslCommunication.Controls.UserCurve();
             this.label4 = new System.Windows.Forms.Label();
-            this.elevationValue = new HslCommunication.Controls.UserCurve();
             this.仰俯角 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.DisView = new HslCommunication.Controls.UserCurve();
@@ -51,9 +49,9 @@
             // xAxis
             // 
             this.xAxis.BackColor = System.Drawing.Color.Transparent;
-            this.xAxis.Location = new System.Drawing.Point(24, 24);
+            this.xAxis.Location = new System.Drawing.Point(12, 24);
             this.xAxis.Name = "xAxis";
-            this.xAxis.Size = new System.Drawing.Size(395, 140);
+            this.xAxis.Size = new System.Drawing.Size(589, 197);
             this.xAxis.TabIndex = 0;
             this.xAxis.ValueMaxLeft = 200F;
             this.xAxis.ValueMaxRight = 200F;
@@ -62,18 +60,18 @@
             // 
             this.hallValue.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.hallValue.BackColor = System.Drawing.Color.Transparent;
-            this.hallValue.Location = new System.Drawing.Point(24, 263);
+            this.hallValue.Location = new System.Drawing.Point(24, 280);
             this.hallValue.Name = "hallValue";
-            this.hallValue.Size = new System.Drawing.Size(395, 140);
+            this.hallValue.Size = new System.Drawing.Size(589, 197);
             this.hallValue.TabIndex = 1;
             // 
             // zAxis
             // 
             this.zAxis.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.zAxis.BackColor = System.Drawing.Color.Transparent;
-            this.zAxis.Location = new System.Drawing.Point(701, 24);
+            this.zAxis.Location = new System.Drawing.Point(719, 24);
             this.zAxis.Name = "zAxis";
-            this.zAxis.Size = new System.Drawing.Size(395, 140);
+            this.zAxis.Size = new System.Drawing.Size(589, 197);
             this.zAxis.TabIndex = 2;
             this.zAxis.ValueMaxLeft = 300F;
             this.zAxis.ValueMaxRight = 300F;
@@ -86,7 +84,7 @@
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Times New Roman", 12F);
-            this.label1.Location = new System.Drawing.Point(24, 6);
+            this.label1.Location = new System.Drawing.Point(36, 6);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(116, 19);
             this.label1.TabIndex = 5;
@@ -97,7 +95,7 @@
             this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Times New Roman", 12F);
-            this.label2.Location = new System.Drawing.Point(701, 6);
+            this.label2.Location = new System.Drawing.Point(742, 6);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(114, 19);
             this.label2.TabIndex = 6;
@@ -108,7 +106,7 @@
             this.label3.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Times New Roman", 12F);
-            this.label3.Location = new System.Drawing.Point(25, 248);
+            this.label3.Location = new System.Drawing.Point(36, 224);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(73, 19);
             this.label3.TabIndex = 7;
@@ -121,7 +119,7 @@
             this.startObservation.CustomerInformation = "";
             this.startObservation.EnableColor = System.Drawing.Color.FromArgb(((int)(((byte)(190)))), ((int)(((byte)(190)))), ((int)(((byte)(190)))));
             this.startObservation.Font = new System.Drawing.Font("微软雅黑", 12F);
-            this.startObservation.Location = new System.Drawing.Point(521, 643);
+            this.startObservation.Location = new System.Drawing.Point(619, 691);
             this.startObservation.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.startObservation.Name = "startObservation";
             this.startObservation.Size = new System.Drawing.Size(78, 25);
@@ -129,43 +127,23 @@
             this.startObservation.UIText = "開始觀測";
             this.startObservation.Click += new System.EventHandler(this.StartObservation_Click);
             // 
-            // servoMode
-            // 
-            this.servoMode.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.servoMode.BackColor = System.Drawing.Color.Transparent;
-            this.servoMode.Location = new System.Drawing.Point(705, 263);
-            this.servoMode.Name = "servoMode";
-            this.servoMode.Size = new System.Drawing.Size(395, 140);
-            this.servoMode.TabIndex = 9;
-            this.servoMode.ValueMaxLeft = 5F;
-            this.servoMode.ValueMaxRight = 5F;
-            // 
             // label4
             // 
             this.label4.Anchor = System.Windows.Forms.AnchorStyles.Right;
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Times New Roman", 12F);
-            this.label4.Location = new System.Drawing.Point(696, 248);
+            this.label4.Location = new System.Drawing.Point(742, 224);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(41, 19);
             this.label4.TabIndex = 10;
             this.label4.Text = "模式";
-            // 
-            // elevationValue
-            // 
-            this.elevationValue.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.elevationValue.BackColor = System.Drawing.Color.Transparent;
-            this.elevationValue.Location = new System.Drawing.Point(24, 496);
-            this.elevationValue.Name = "elevationValue";
-            this.elevationValue.Size = new System.Drawing.Size(395, 140);
-            this.elevationValue.TabIndex = 11;
             // 
             // 仰俯角
             // 
             this.仰俯角.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.仰俯角.AutoSize = true;
             this.仰俯角.Font = new System.Drawing.Font("Times New Roman", 12F);
-            this.仰俯角.Location = new System.Drawing.Point(25, 484);
+            this.仰俯角.Location = new System.Drawing.Point(36, 496);
             this.仰俯角.Name = "仰俯角";
             this.仰俯角.Size = new System.Drawing.Size(57, 19);
             this.仰俯角.TabIndex = 12;
@@ -176,7 +154,7 @@
             this.label5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("新細明體", 12F);
-            this.label5.Location = new System.Drawing.Point(701, 477);
+            this.label5.Location = new System.Drawing.Point(743, 498);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(73, 16);
             this.label5.TabIndex = 13;
@@ -186,19 +164,19 @@
             // 
             this.DisView.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.DisView.BackColor = System.Drawing.Color.Transparent;
-            this.DisView.Location = new System.Drawing.Point(700, 496);
+            this.DisView.Location = new System.Drawing.Point(719, 519);
             this.DisView.Name = "DisView";
-            this.DisView.Size = new System.Drawing.Size(395, 140);
+            this.DisView.Size = new System.Drawing.Size(589, 197);
             this.DisView.TabIndex = 14;
             this.DisView.ValueMaxLeft = 5F;
             this.DisView.ValueMaxRight = 5F;
             // 
             // ModeBox
             // 
-            this.ModeBox.Location = new System.Drawing.Point(425, 263);
+            this.ModeBox.Location = new System.Drawing.Point(719, 280);
             this.ModeBox.Name = "ModeBox";
-            this.ModeBox.Size = new System.Drawing.Size(262, 125);
-            this.ModeBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.ModeBox.Size = new System.Drawing.Size(589, 197);
+            this.ModeBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
             this.ModeBox.TabIndex = 15;
             this.ModeBox.TabStop = false;
             // 
@@ -206,25 +184,23 @@
             // 
             this.elevationGaugeChart.BackColor = System.Drawing.Color.Transparent;
             this.elevationGaugeChart.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.elevationGaugeChart.Location = new System.Drawing.Point(425, 484);
+            this.elevationGaugeChart.Location = new System.Drawing.Point(24, 519);
             this.elevationGaugeChart.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.elevationGaugeChart.Name = "elevationGaugeChart";
-            this.elevationGaugeChart.Size = new System.Drawing.Size(257, 131);
+            this.elevationGaugeChart.Size = new System.Drawing.Size(589, 197);
             this.elevationGaugeChart.TabIndex = 16;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1076, 677);
+            this.ClientSize = new System.Drawing.Size(1350, 729);
             this.Controls.Add(this.elevationGaugeChart);
             this.Controls.Add(this.ModeBox);
             this.Controls.Add(this.DisView);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.仰俯角);
-            this.Controls.Add(this.elevationValue);
             this.Controls.Add(this.label4);
-            this.Controls.Add(this.servoMode);
             this.Controls.Add(this.startObservation);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label2);
@@ -252,9 +228,7 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
         private HslCommunication.Controls.UserButton startObservation;
-        private HslCommunication.Controls.UserCurve servoMode;
         private System.Windows.Forms.Label label4;
-        private HslCommunication.Controls.UserCurve elevationValue;
         private System.Windows.Forms.Label 仰俯角;
         private System.Windows.Forms.Label label5;
         private HslCommunication.Controls.UserCurve DisView;
